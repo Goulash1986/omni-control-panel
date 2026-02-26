@@ -221,6 +221,26 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* FILE DROP */
+.file-drop{border:2px dashed var(--border2);border-radius:12px;padding:20px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);}
+.file-drop:hover,.file-drop.dragover{border-color:var(--accent);background:rgba(124,58,237,.06);}
+.file-drop.has-file{border-color:var(--green);border-style:solid;background:rgba(16,185,129,.04);}
+
+/* DEAD PHONE CARD */
+.phone-add{position:relative;background:linear-gradient(160deg,#080812,#0f0f1e);border-radius:34px;border:1.5px solid rgba(255,255,255,.06);box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(0,0,0,.3);overflow:hidden;cursor:pointer;transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:320px;animation:ca .4s ease both;}
+.phone-add::before{content:'';position:absolute;inset:0;border-radius:34px;background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,transparent 40%,transparent 60%,rgba(255,255,255,.02) 100%);}
+.phone-add:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 30px 80px rgba(0,0,0,.8),0 0 40px var(--glow);}
+/* screen flicker */
+.phone-screen{width:60%;aspect-ratio:9/16;background:#000;border-radius:20px;border:2px solid #1a1a2e;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;box-shadow:0 0 20px rgba(0,0,0,.8) inset;}
+.phone-screen::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 30%,rgba(124,58,237,.04) 50%,transparent 70%);animation:flicker 4s infinite;}
+@keyframes flicker{0%,100%{opacity:0;}10%{opacity:1;}11%{opacity:0;}40%{opacity:0;}41%{opacity:.6;}42%{opacity:0;}70%{opacity:0;}71%{opacity:.3;}72%{opacity:0;}85%{opacity:0;}86%{opacity:.8;}87%{opacity:0;}95%{opacity:0;}96%{opacity:.4;}97%{opacity:0;}}
+.phone-screen-content{text-align:center;z-index:1;}
+.phone-plus{font-size:32px;color:rgba(124,58,237,.4);margin-bottom:8px;transition:all .3s;}
+.phone-add:hover .phone-plus{color:var(--accent2);text-shadow:0 0 20px var(--accent);}
+.phone-add-label{margin-top:14px;font-size:11px;color:var(--muted2);letter-spacing:2px;text-transform:uppercase;}
+/* notch on dead phone */
+.phone-notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:50px;height:12px;background:#000;border-radius:6px;z-index:5;}
 </style>
 </head>
 <body>
@@ -265,14 +285,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
 
 <!-- CONTENT -->
 <div id="page-content" class="page">
-  <div class="sh"><div class="stit">Контент</div><button class="btn bp bsm" onclick="openPost()">+ Карточка</button></div>
+  <div class="sh"><div class="stit">Контент</div><div style="display:flex;gap:8px"><button class="btn bg bsm" onclick="g('ov-cats').style.display='flex';renderCatsList()">⚙️ Категории</button></div></div>
   <div class="cbar" id="conCatBar"></div>
-  <div class="cbar" id="conStatusBar">
-    <div class="chip active" onclick="fConSt('all',this)">Все</div>
-    <div class="chip" onclick="fConSt('published',this)">📤 Опубликованные</div>
-    <div class="chip" onclick="fConSt('draft',this)">📝 Черновики</div>
-    <div class="chip" onclick="fConSt('scheduled',this)">⏳ Запланированные</div>
-  </div>
+
   <div class="cgrid" id="contentCards"></div>
 </div>
 
@@ -372,7 +387,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
     <div class="ict">Основное <span class="icl"></span></div>
     <div class="fg"><label class="fl">Username бота</label><input class="fi" id="set-bn" placeholder="@YourBot"></div>
     <div class="fg"><label class="fl">ID канала</label><input class="fi" id="set-ch" placeholder="-1001234567890"></div>
-    <div class="fg"><label class="fl">Язык</label><select class="fs" id="set-lg"><option value="ru">🇷🇺 Русский</option><option value="uk">🇺🇦 Українська</option></select></div>
+    <div class="fg"><label class="fl">Язык</label><select class="fs" id="set-lg"><option value="ru">🇷🇺 Русский</option><option value="uk">🇺🇦 Українська</option><option value="en">🇬🇧 English</option></select></div>
     <button class="btn bp bsm" onclick="toast('✅ Сохранено!')">💾 Сохранить</button>
   </div>
   <div class="ic">
@@ -395,9 +410,17 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   <div class="fg"><label class="fl">Категория</label><select class="fs" id="post-cat"></select></div>
   <div class="fg">
     <label class="fl">Постер</label>
-    <div class="pgen" onclick="openPosterGen('post-purl')"><div class="pgen-ic">🖼</div><div class="pgen-tx">Нажми для AI-генерации постера<br><span style="font-size:9px;opacity:.6">или вставь URL ниже</span></div></div>
-    <input class="fi" id="post-purl" placeholder="URL изображения (необязательно)" style="margin-top:6px" oninput="previewUrl(this,'post-prev')">
-    <div id="post-prev" style="display:none;margin-top:8px"><img id="post-prev-img" style="width:100%;border-radius:10px" src=""></div>
+    <div class="file-drop" onclick="g('post-file').click()" id="post-drop">
+      <div style="font-size:28px;margin-bottom:6px">📁</div>
+      <div style="font-size:12px;color:var(--muted2)">Нажми или перетащи изображение</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">JPG, PNG, WEBP до 10MB</div>
+    </div>
+    <input type="file" id="post-file" accept="image/*" style="display:none" onchange="handleFileUpload(this,'post-drop','post-purl')">
+    <input type="hidden" id="post-purl" value="">
+    <div id="post-prev" style="display:none;margin-top:8px;position:relative">
+      <img id="post-prev-img" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover" src="">
+      <button onclick="clearFile('post-file','post-drop','post-purl','post-prev')" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:none;color:white;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px">✕</button>
+    </div>
   </div>
   <div class="fg">
     <label class="fl">Текст поста</label>
@@ -411,14 +434,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
     </div>
     <button class="ibadd" onclick="addBtn('post-btns')" style="width:100%;margin-top:6px">+ Добавить кнопку</button>
   </div>
-  <div class="fr2">
-    <div class="fg"><label class="fl">Статус</label>
-      <select class="fs" id="post-st" onchange="g('post-sw').style.display=this.value==='scheduled'?'block':'none'">
-        <option value="draft">📝 Черновик</option><option value="scheduled">⏳ Запланировать</option><option value="published">📤 Опубликовать</option>
-      </select>
-    </div>
-    <div class="fg" id="post-sw" style="display:none"><label class="fl">Дата/время</label><input class="fi" type="datetime-local" id="post-sched"></div>
-  </div>
+
   <div class="fa"><button class="btn bp" onclick="savePost()">💾 Сохранить</button><button class="btn bg" onclick="cls('ov-post')">Отмена</button></div>
 </div></div>
 
@@ -430,9 +446,16 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   <input type="hidden" id="ad-eid">
   <div class="fg">
     <label class="fl">Постер</label>
-    <div class="pgen" onclick="openPosterGen('ad-purl')"><div class="pgen-ic">🖼</div><div class="pgen-tx">AI-генерация постера</div></div>
-    <input class="fi" id="ad-purl" placeholder="URL изображения" style="margin-top:6px" oninput="previewUrl(this,'ad-prev')">
-    <div id="ad-prev" style="display:none;margin-top:8px"><img id="ad-prev-img" style="width:100%;border-radius:10px" src=""></div>
+    <div class="file-drop" onclick="g('ad-file').click()" id="ad-drop">
+      <div style="font-size:28px;margin-bottom:6px">📁</div>
+      <div style="font-size:12px;color:var(--muted2)">Нажми или перетащи изображение</div>
+    </div>
+    <input type="file" id="ad-file" accept="image/*" style="display:none" onchange="handleFileUpload(this,'ad-drop','ad-purl')">
+    <input type="hidden" id="ad-purl" value="">
+    <div id="ad-prev" style="display:none;margin-top:8px;position:relative">
+      <img id="ad-prev-img" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover" src="">
+      <button onclick="clearFile('ad-file','ad-drop','ad-purl','ad-prev')" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:none;color:white;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px">✕</button>
+    </div>
   </div>
   <div class="fg">
     <label class="fl">Рекламный текст</label>
@@ -445,7 +468,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   </div>
   <div class="fr2">
     <div class="fg"><label class="fl">Цена</label><input class="fi" id="ad-price" type="number" placeholder="1000"></div>
-    <div class="fg"><label class="fl">Валюта</label><select class="fs" id="ad-cur"><option>UAH</option><option>USD</option><option>EUR</option><option>RUB</option></select></div>
+    <div class="fg"><label class="fl">Валюта</label><select class="fs" id="ad-cur"><option>UAH</option><option>USD</option><option>EUR</option></select></div>
   </div>
   <div class="fr2">
     <div class="fg"><label class="fl">Публикация</label><input class="fi" type="datetime-local" id="ad-pub"></div>
@@ -462,9 +485,16 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;bac
   <input type="hidden" id="hero-eid">
   <div class="fg">
     <label class="fl">Постер / Фото</label>
-    <div class="pgen" onclick="openPosterGen('hero-purl')"><div class="pgen-ic">🌟</div><div class="pgen-tx">AI-генерация постера</div></div>
-    <input class="fi" id="hero-purl" placeholder="URL изображения" style="margin-top:6px" oninput="previewUrl(this,'hero-prev')">
-    <div id="hero-prev" style="display:none;margin-top:8px"><img id="hero-prev-img" style="width:100%;border-radius:10px" src=""></div>
+    <div class="file-drop" onclick="g('hero-file').click()" id="hero-drop">
+      <div style="font-size:28px;margin-bottom:6px">📁</div>
+      <div style="font-size:12px;color:var(--muted2)">Нажми или перетащи изображение</div>
+    </div>
+    <input type="file" id="hero-file" accept="image/*" style="display:none" onchange="handleFileUpload(this,'hero-drop','hero-purl')">
+    <input type="hidden" id="hero-purl" value="">
+    <div id="hero-prev" style="display:none;margin-top:8px;position:relative">
+      <img id="hero-prev-img" style="width:100%;border-radius:10px;max-height:200px;object-fit:cover" src="">
+      <button onclick="clearFile('hero-file','hero-drop','hero-purl','hero-prev')" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);border:none;color:white;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px">✕</button>
+    </div>
   </div>
   <div class="fg"><label class="fl">Заголовок / Слоган</label><input class="fi" id="hero-title" placeholder="Добро пожаловать!"></div>
   <div class="fg">
@@ -522,15 +552,9 @@ let HERO=[
   {id:2,emoji:'💡',title:'Пульт управления',text:'Здесь всё под контролем. Создавай, публикуй, зарабатывай 💰',poster_url:''},
   {id:3,emoji:'✨',title:'Новый день — новый контент',text:'Каждый день — возможность создать что-то крутое. Поехали! 🎯',poster_url:''},
 ];
-const TEAM=[{id:103920773,name:'Goulash1986',role:'owner',date:'01.01.2026'},{id:2,name:'Андрей А.',role:'admin',date:'10.01.2026'},{id:3,name:'Мария К.',role:'editor',date:'15.02.2026'}];
-const TREQS=[{id:1,name:'Иван П.',msg:'Хочу помогать с контентом'}];
-let INBOX=[
-  {id:1,from:'@beauty_fan',msg:'Привет! Когда будет новый обзор?',src:'ig',status:'unread',starred:false,time:'сегодня 14:30'},
-  {id:2,from:'@hater_99',msg:'МУСОР! ты бесполезная [мат обнаружен]',src:'tt',status:'unread',starred:false,time:'сегодня 12:00',warn:true},
-  {id:3,from:'@dancer_girl',msg:'Очень вдохновляют твои танцы!',src:'tg',status:'unread',starred:true,time:'вчера 18:44'},
-  {id:4,from:'@spam_link',msg:'Переходи по ссылке [ссылка заблокирована]',src:'ig',status:'read',starred:false,time:'вчера 11:20',warn:true},
-  {id:5,from:'@follower_ua',msg:'Когда новый стрим?',src:'tt',status:'read',starred:false,time:'23.02 09:15'},
-];
+const TEAM=[{id:103920773,name:'Goulash1986',role:'owner',date:'01.01.2026'}];
+const TREQS=[];
+let INBOX=[];
 
 let _cc='all',_cs='all',_af='all',_if='all';
 let _pgenTarget=null,_aiT=null;
@@ -577,26 +601,33 @@ function loadContent(){
   renderCon();
 }
 function fConCat(v,btn){_cc=v;g('conCatBar').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCon();}
-function fConSt(v,btn){_cs=v;g('conStatusBar').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCon();}
+function fConSt(v,btn){}
 function renderCon(){
   let p=POSTS;
   if(_cc!=='all')p=p.filter(x=>String(x.cat_id)===String(_cc));
-  if(_cs!=='all')p=p.filter(x=>x.status===_cs);
-  const sc={published:'spub',draft:'sdrf',scheduled:'ssch'};
-  const st={published:'📤 Опубликован',draft:'📝 Черновик',scheduled:'⏳ Запланирован'};
-  g('contentCards').innerHTML=p.length?p.map(x=>{
+  const phoneCard=`<div class="phone-add" onclick="openPost()">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="phone-screen-content">
+        <div class="phone-plus">+</div>
+        <div style="font-size:10px;color:rgba(124,58,237,.5);letter-spacing:1px">NEW</div>
+      </div>
+    </div>
+    <div class="phone-add-label">Новая карточка</div>
+  </div>`;
+  g('contentCards').innerHTML=phoneCard+p.map(x=>{
     const cat=CATS.find(c=>c.id===x.cat_id)||{icon:'📋',name:''};
-    return`<div class="iphcard"><div class="di"></div><span class="cst ${sc[x.status]||'sdrf'}">${st[x.status]||x.status}</span>
+    return`<div class="iphcard"><div class="di"></div>
     <div class="cposter">${x.poster_url?`<img src="${x.poster_url}">`:`<div class="cpph"><span style="font-size:38px">${cat.icon}</span><span>${cat.name}</span></div>`}</div>
     <div class="cbody"><div class="ccat">${cat.icon} ${cat.name}</div><div class="ctitle">${x.title}</div><div class="ctext">${x.text}</div>
     ${x.buttons?.length?`<div class="cbtns">${x.buttons.map(b=>`<span class="cbtnchip">🔗 ${b.text}</span>`).join('')}</div>`:''}
     </div><div class="cact"><button class="cab csen" onclick="sendPost(${x.id})">📤 Отправить</button><button class="cab cedt" onclick="editPost(${x.id})">✏️</button><button class="cab cdel" onclick="delPost(${x.id})">🗑</button></div></div>`;
-  }).join('') : '<div style="color:var(--muted2);font-size:11px;padding:20px;text-align:center;grid-column:1/-1">Создай первую карточку!</div>';
+  }).join('');
 }
 function sendPost(id){const p=POSTS.find(x=>x.id===id);if(p&&confirm(`Опубликовать "${p.title}" в канал?`)){p.status='published';renderCon();toast('📤 Отправлено в канал!');}}
 function editPost(id){
   const p=POSTS.find(x=>x.id===id);if(!p)return;
-  g('post-eid').value=id;g('post-cat').value=p.cat_id;g('post-text').value=p.text;g('post-st').value=p.status;g('post-purl').value=p.poster_url||'';
+  g('post-eid').value=id;g('post-cat').value=p.cat_id;g('post-text').value=p.text;g('post-purl').value=p.poster_url||'';
   if(p.poster_url){g('post-prev').style.display='block';g('post-prev-img').src=p.poster_url;}
   const ed=g('post-btns');ed.innerHTML=(p.buttons||[]).map(b=>`<div class="ibr"><input class="fi" placeholder="Текст" value="${b.text}" style="flex:1"><input class="fi" placeholder="URL" value="${b.url}" style="flex:1.5"><button class="ibrm" onclick="this.closest('.ibr').remove()">✕</button></div>`).join('');
   g('ov-post').style.display='flex';
@@ -607,7 +638,7 @@ function savePost(){
   const cid=parseInt(g('post-cat').value);const cat=CATS.find(c=>c.id===cid);
   const btns=[...g('post-btns').querySelectorAll('.ibr')].map(r=>{const inp=r.querySelectorAll('input');return{text:inp[0].value,url:inp[1].value};}).filter(b=>b.text);
   const txt=g('post-text').value;
-  const d={cat_id:cid,poster_url:g('post-purl').value,title:txt.split('\n')[0].replace(/[^\wА-яЁё\s!?🔥✨💡💎]/g,'').trim().substring(0,45)||'Без названия',text:txt,buttons:btns,status:g('post-st').value,created:new Date().toLocaleDateString('ru')};
+  const d={cat_id:cid,poster_url:g('post-purl').value,title:txt.split('\n')[0].replace(/[^\wА-яЁё\s!?🔥✨💡💎]/g,'').trim().substring(0,45)||'Без названия',text:txt,buttons:btns,status:'ready',created:new Date().toLocaleDateString('ru')};
   if(!txt){alert('Введи текст');return;}
   if(eid){const i=POSTS.findIndex(p=>p.id===eid);if(i>=0)POSTS[i]={...POSTS[i],...d};}
   else POSTS.unshift({id:Date.now(),...d});
@@ -615,7 +646,7 @@ function savePost(){
   g('post-btns').innerHTML='<div class="ibr"><input class="fi" placeholder="Текст кнопки" style="flex:1"><input class="fi" placeholder="URL" style="flex:1.5"><button class="ibrm" onclick="this.closest(\'.ibr\').remove()">✕</button></div>';
   g('ais-post').classList.remove('show');renderCon();toast('✅ Карточка сохранена!');
 }
-function openPost(){g('post-eid').value='';g('post-st').value='draft';g('ov-post').style.display='flex';}
+function openPost(){g('post-eid').value='';g('ov-post').style.display='flex';}
 
 // ADS
 function loadAds(){
@@ -629,7 +660,8 @@ function fAds(v,btn){_af=v;g('adFilterBar').querySelectorAll('.chip').forEach(b=
 function renderAds(){
   let ads=_af==='all'?ADS:ADS.filter(a=>a.status===_af);
   const sc={active:'sact',pending:'spen',done:'sdon'};const st={active:'📢 В канале',pending:'⏳ В очереди',done:'✅ Закончилась'};
-  g('adsCards').innerHTML=ads.length?ads.map(a=>`<div class="iphcard"><div class="di"></div><span class="cst ${sc[a.status]}">${st[a.status]}</span>
+  const adPhone=`<div class="phone-add" onclick="openAd()"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-screen-content"><div class="phone-plus">+</div><div style="font-size:10px;color:rgba(124,58,237,.5);letter-spacing:1px">AD</div></div></div><div class="phone-add-label">Новая кампания</div></div>`;
+  g('adsCards').innerHTML=adPhone+(ads.length?ads.map(a=>`<div class="iphcard"><div class="di"></div><span class="cst ${sc[a.status]}">${st[a.status]}</span>
     <div class="cposter">${a.poster_url?`<img src="${a.poster_url}">`:`<div class="cpph"><span style="font-size:38px">💼</span><span>${a.client}</span></div>`}</div>
     <div class="cbody"><div class="ccat">💼 Реклама</div><div class="ctitle">${a.client}</div><div class="ctext">${a.text}</div>
     <div class="admeta"><span class="adprice">${a.price} ${a.currency}</span><span class="adtag">📅 ${a.pub_at}</span>${a.del_after>0?`<span class="adtag">⏱ ${a.del_after}ч</span>`:''}</div>
@@ -652,7 +684,8 @@ function openAd(){g('ad-eid').value='';g('ov-ad').style.display='flex';}
 // HERO
 function loadHero(){
   g('hcount').textContent=HERO.length;
-  g('heroCards').innerHTML=HERO.map(h=>`<div class="iphcard"><div class="di"></div>
+  const heroPhone=`<div class="phone-add" onclick="openHero()"><div class="phone-notch"></div><div class="phone-screen"><div class="phone-screen-content"><div class="phone-plus">+</div><div style="font-size:10px;color:rgba(124,58,237,.5);letter-spacing:1px">HERO</div></div></div><div class="phone-add-label">Новая карточка</div></div>`;
+  g('heroCards').innerHTML=heroPhone+HERO.map(h=>`<div class="iphcard"><div class="di"></div>
     <div class="cposter">${h.poster_url?`<img src="${h.poster_url}">`:`<div class="cpph"><span style="font-size:42px">${h.emoji||'🌟'}</span></div>`}</div>
     <div class="cbody"><div class="ccat">🌟 Персонаж</div><div class="ctitle">${h.title}</div><div class="ctext">${h.text}</div></div>
     <div class="cact"><button class="cab cedt" onclick="previewHero(${h.id})" style="flex:2">👁 Превью</button><button class="cab cedt" onclick="editHero(${h.id})">✏️</button><button class="cab cdel" onclick="delHero(${h.id})">🗑</button></div></div>`).join('');
@@ -793,7 +826,113 @@ function cnt(id,target){
   const e=g(id);if(!e)return;let c=0;const s=Math.ceil(target/20)||1;
   const t=setInterval(()=>{c=Math.min(c+s,target);e.textContent=c;if(c>=target)clearInterval(t);},40);
 }
+
+// FILE UPLOAD
+function handleFileUpload(input, dropId, hiddenId, prevId) {
+  const file = input.files[0];
+  if (!file) return;
+  const drop = g(dropId);
+  drop.classList.add('has-file');
+  drop.innerHTML = `<div style="font-size:28px;margin-bottom:6px">✅</div><div style="font-size:12px;color:var(--green)">${file.name}</div><div style="font-size:11px;color:var(--muted);margin-top:4px">${(file.size/1024/1024).toFixed(1)} MB</div>`;
+  const reader = new FileReader();
+  reader.onload = e => {
+    g(hiddenId).value = e.target.result;
+    if (prevId) {
+      const prev = g(prevId);
+      if (prev) {
+        prev.style.display = 'block';
+        const img = prev.querySelector('img');
+        if (img) img.src = e.target.result;
+      }
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearFile(fileId, dropId, hiddenId, prevId) {
+  const input = g(fileId);
+  if (input) input.value = '';
+  if (hiddenId) g(hiddenId).value = '';
+  const drop = g(dropId);
+  if (drop) {
+    drop.classList.remove('has-file');
+    drop.innerHTML = '<div style="font-size:28px;margin-bottom:6px">📁</div><div style="font-size:12px;color:var(--muted2)">Нажми или перетащи изображение</div>';
+  }
+  if (prevId) { const prev = g(prevId); if (prev) prev.style.display = 'none'; }
+}
+
+// DRAG & DROP for file areas
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.file-drop').forEach(drop => {
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('drop', e => {
+      e.preventDefault(); drop.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (!file || !file.type.startsWith('image/')) return;
+      const inputId = drop.id.replace('-drop', '-file');
+      const hiddenId = drop.id.replace('-drop', '-purl');
+      const prevId = drop.id.replace('-drop', '-prev');
+      const fakeInput = { files: [file] };
+      handleFileUpload(fakeInput, drop.id, hiddenId, prevId);
+    });
+  });
+});
+
+// CATEGORIES MANAGEMENT
+function renderCatsList() {
+  g('cats-list').innerHTML = CATS.map(c => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:20px">${c.icon}</span>
+      <div style="flex:1;font-size:13px">${c.name}</div>
+      <button onclick="deleteCat(${c.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:4px">🗑</button>
+    </div>`).join('');
+}
+
+function addCat() {
+  const name = g('new-cat-name').value.trim();
+  const icon = g('new-cat-icon').value.trim() || '📁';
+  if (!name) { alert('Введи название'); return; }
+  const id = Date.now();
+  CATS.push({ id, name, icon });
+  g('new-cat-name').value = ''; g('new-cat-icon').value = '';
+  renderCatsList();
+  loadContent(); // refresh category chips
+  populateCats();
+  toast(`✅ Категория "${name}" добавлена`);
+}
+
+function deleteCat(id) {
+  const c = CATS.find(x => x.id === id);
+  if (!c) return;
+  if (POSTS.some(p => p.cat_id === id)) {
+    alert('Нельзя удалить — в этой категории есть карточки!');
+    return;
+  }
+  if (!confirm(`Удалить категорию "${c.name}"?`)) return;
+  const idx = CATS.findIndex(x => x.id === id);
+  if (idx >= 0) CATS.splice(idx, 1);
+  renderCatsList(); loadContent(); populateCats();
+  toast('🗑 Категория удалена');
+}
+
 if(window.Telegram?.WebApp){const tg=window.Telegram.WebApp;tg.expand();}
 </script>
+
+<!-- CATEGORIES MODAL -->
+<div id="ov-cats" class="ov" style="display:none" onclick="if(event.target===this)g('ov-cats').style.display='none'">
+<div class="sh-box">
+  <div class="sh-handle"></div>
+  <div class="sh-title">Управление категориями <button class="sh-close" onclick="g('ov-cats').style.display='none'">✕</button></div>
+  <div id="cats-list" style="margin-bottom:16px"></div>
+  <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:8px">
+    <div style="font-size:11px;color:var(--muted2);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Новая категория</div>
+    <div class="fr2">
+      <div class="fg"><label class="fl">Название</label><input class="fi" id="new-cat-name" placeholder="TikTok"></div>
+      <div class="fg"><label class="fl">Иконка</label><input class="fi" id="new-cat-icon" placeholder="🎵" maxlength="4"></div>
+    </div>
+    <button class="btn bp bsm" onclick="addCat()">+ Добавить</button>
+  </div>
+</div></div>
 </body>
 </html>

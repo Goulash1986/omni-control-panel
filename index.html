@@ -1,1081 +1,799 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="cyber">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <title>OMNI-CONTROL 2026</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;600&display=swap');
-:root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--border:#2a2a3a;--accent:#7c3aed;--accent2:#a855f7;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--text:#e2e8f0;--muted:#64748b;}
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh;}
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(124,58,237,.015) 2px,rgba(124,58,237,.015) 4px);pointer-events:none;z-index:9999;}
+:root,[data-theme="cyber"]{--bg:#070710;--bg2:#0d0d1a;--bg3:#13132a;--bg4:#1a1a35;--border:#2a2a50;--border2:#3a3a70;--accent:#7c3aed;--accent2:#a855f7;--accent3:#c084fc;--glow:rgba(124,58,237,.35);--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--pink:#ec4899;--text:#e8e8ff;--muted:#6060a0;--muted2:#9090c0;--cb:rgba(13,13,26,.9);--cc:rgba(124,58,237,.25);--ibg:linear-gradient(145deg,#1a1a35,#0d0d1a);}
+[data-theme="rose"]{--bg:#0f0810;--bg2:#1a1020;--bg3:#241530;--bg4:#2e1a3a;--border:#4a2050;--border2:#6a3070;--accent:#ec4899;--accent2:#f472b6;--accent3:#fbcfe8;--glow:rgba(236,72,153,.35);--green:#34d399;--red:#f87171;--yellow:#fbbf24;--blue:#60a5fa;--pink:#f9a8d4;--text:#fce7f3;--muted:#80406a;--muted2:#c080a0;--cb:rgba(26,16,32,.9);--cc:rgba(236,72,153,.25);--ibg:linear-gradient(145deg,#2e1a3a,#1a1020);}
+[data-theme="minimal"]{--bg:#fafafa;--bg2:#f4f4f4;--bg3:#ececec;--bg4:#e4e4e4;--border:#d0d0d0;--border2:#b0b0b0;--accent:#1a1a1a;--accent2:#333;--accent3:#666;--glow:rgba(0,0,0,.08);--green:#059669;--red:#dc2626;--yellow:#d97706;--blue:#2563eb;--pink:#db2777;--text:#111;--muted:#888;--muted2:#555;--cb:rgba(255,255,255,.95);--cc:rgba(0,0,0,.1);--ibg:linear-gradient(145deg,#fff,#f0f0f0);}
+[data-theme="aurora"]{--bg:#030810;--bg2:#060f1e;--bg3:#0a1628;--bg4:#0f1f35;--border:#1a3050;--border2:#254575;--accent:#00d4ff;--accent2:#00f5a0;--accent3:#7df9ff;--glow:rgba(0,212,255,.3);--green:#00f5a0;--red:#ff4d6d;--yellow:#ffd60a;--blue:#00d4ff;--pink:#ff85a1;--text:#d0f0ff;--muted:#304060;--muted2:#608090;--cb:rgba(6,15,30,.9);--cc:rgba(0,212,255,.2);--ibg:linear-gradient(145deg,#0f1f35,#060f1e);}
+[data-theme="lux"]{--bg:#0a0800;--bg2:#141000;--bg3:#1e1800;--bg4:#282000;--border:#403000;--border2:#604800;--accent:#d4a017;--accent2:#f0c040;--accent3:#ffd700;--glow:rgba(212,160,23,.3);--green:#52b788;--red:#e63946;--yellow:#f0c040;--blue:#4895ef;--pink:#ff758f;--text:#f5e6b0;--muted:#604830;--muted2:#a08050;--cb:rgba(20,16,0,.95);--cc:rgba(212,160,23,.25);--ibg:linear-gradient(145deg,#282000,#141000);}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;min-height:100vh;overflow-x:hidden;transition:background .4s,color .4s;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 60% 40% at 20% 20%,var(--glow),transparent 60%),radial-gradient(ellipse 40% 60% at 80% 80%,var(--glow),transparent 60%);opacity:.35;}
+[data-theme="minimal"] body::before{display:none;}
 
-.header{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;}
-.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;background:linear-gradient(135deg,var(--accent2),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-.hdr-r{display:flex;align-items:center;gap:10px;}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-.btn-api{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-family:inherit;font-size:10px;cursor:pointer;letter-spacing:1px;transition:all .2s;}
-.btn-api:hover{border-color:var(--accent);color:var(--text);}
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:200;background:rgba(7,7,16,.94);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);padding:0 14px;height:50px;display:flex;align-items:center;justify-content:space-between;}
+[data-theme="minimal"] .hdr{background:rgba(250,250,250,.97);}
+[data-theme="rose"] .hdr{background:rgba(15,8,16,.94);}
+[data-theme="aurora"] .hdr{background:rgba(3,8,16,.94);}
+[data-theme="lux"] .hdr{background:rgba(10,8,0,.94);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:4px;background:linear-gradient(135deg,var(--accent2),var(--accent3),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hdr-r{display:flex;align-items:center;gap:8px;}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:lp 2s infinite;}
+@keyframes lp{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.4);}}
 
-.nav{display:flex;gap:2px;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+/* NAV */
+.nav{display:flex;gap:2px;padding:6px 10px;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;position:sticky;top:50px;z-index:190;}
 .nav::-webkit-scrollbar{display:none;}
-.nb{padding:7px 13px;border:none;background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:6px;white-space:nowrap;transition:all .2s;}
-.nb.active{background:rgba(124,58,237,.15);color:var(--accent2);border:1px solid rgba(124,58,237,.3);}
+.nb{flex-shrink:0;padding:6px 12px;border:none;background:transparent;color:var(--muted2);font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;border-radius:6px;transition:all .2s;white-space:nowrap;}
+.nb.active{background:var(--accent);color:#fff;box-shadow:0 0 12px var(--glow);}
 .nb:not(.active):hover{color:var(--text);background:var(--bg3);}
-.bdg{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--accent);color:white;font-size:10px;font-weight:700;margin-left:4px;}
+.bdg{display:inline-flex;align-items:center;justify-content:center;min-width:15px;height:15px;padding:0 4px;border-radius:7px;background:var(--red);color:white;font-size:9px;font-weight:700;margin-left:3px;}
 
-.page{display:none;padding:16px;animation:fi .25s ease;}
+/* PAGES */
+.page{display:none;padding:14px;animation:pi .25s ease;position:relative;z-index:1;}
 .page.active{display:block;}
-@keyframes fi{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pi{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-.g4{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
-@media(min-width:580px){.g4{grid-template-columns:repeat(4,1fr);}}
+/* LAYOUTS */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;}
+.stit{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;}
+.stit span{color:var(--accent2);}
+.g4{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+@media(min-width:500px){.g4{grid-template-columns:repeat(4,1fr);}}
 
-.stat{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden;transition:border-color .2s;}
-.stat:hover{border-color:var(--accent);}
+/* STAT */
+.stat{background:var(--cb);border:1px solid var(--cc);border-radius:12px;padding:12px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;}
+.stat:hover{transform:translateY(-2px);border-color:var(--accent);}
 .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--al,var(--accent));}
-.sl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
-.sv{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;line-height:1;}
-.ss{font-size:10px;margin-top:4px;color:var(--muted);}
+.sl{font-size:9px;color:var(--muted2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
+.sv{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;line-height:1;}
+.ss{font-size:9px;color:var(--muted2);margin-top:3px;}
 
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;}
-.ct{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.ctl{flex:1;height:1px;background:var(--border);}
+/* CATEGORY CHIPS */
+.cbar{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding:2px 0;scrollbar-width:none;}
+.cbar::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;padding:5px 12px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted2);border-radius:20px;font-family:'Space Mono',monospace;font-size:10px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.chip.active,.chip:hover{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 0 10px var(--glow);}
 
+/* ═══ iPHONE CARD ═══ */
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;}
+.iphcard{position:relative;background:var(--ibg);border-radius:34px;border:1.5px solid rgba(255,255,255,.1);box-shadow:0 2px 0 rgba(255,255,255,.07) inset,0 -1px 0 rgba(0,0,0,.5) inset,0 20px 60px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.3),0 0 30px var(--glow);overflow:hidden;transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;animation:ca .4s ease both;}
+@keyframes ca{from{opacity:0;transform:scale(.92) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.iphcard:hover{transform:translateY(-6px) scale(1.01);box-shadow:0 2px 0 rgba(255,255,255,.1) inset,0 -1px 0 rgba(0,0,0,.5) inset,0 30px 80px rgba(0,0,0,.7),0 0 0 1px rgba(0,0,0,.3),0 0 50px var(--glow);}
+.iphcard::before{content:'';position:absolute;inset:0;border-radius:34px;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,transparent 40%,transparent 60%,rgba(255,255,255,.03) 100%);z-index:10;}
+/* Dynamic Island */
+.di{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:#000;border-radius:20px;width:80px;height:22px;z-index:15;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 0 0 1px rgba(255,255,255,.08);overflow:hidden;transition:width .3s;}
+.iphcard:hover .di{width:110px;}
+.di::before{content:'';width:8px;height:8px;border-radius:50%;background:#1a1a1a;border:2px solid #2a2a2a;flex-shrink:0;}
+.di::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:lp 2s infinite;flex-shrink:0;}
+/* Poster */
+.cposter{width:100%;aspect-ratio:16/9;background:linear-gradient(135deg,var(--bg3),var(--bg4));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;margin-top:40px;}
+.cposter img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;}
+.cpph{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.45;}
+.cpph span{font-size:9px;color:var(--muted2);letter-spacing:1px;}
+.cposter::after{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.04) 50%,transparent 60%);animation:sh 3s infinite;}
+@keyframes sh{0%{transform:translateX(-100%);}100%{transform:translateX(200%);}}
+/* Status */
+.cst{position:absolute;top:46px;right:10px;z-index:5;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.5px;backdrop-filter:blur(10px);}
+.spub{background:rgba(16,185,129,.2);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+.sdrf{background:rgba(96,96,160,.2);color:var(--muted2);border:1px solid var(--border);}
+.ssch{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.25);}
+.sact{background:rgba(16,185,129,.2);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+.spen{background:rgba(245,158,11,.15);color:var(--yellow);border:1px solid rgba(245,158,11,.25);}
+.sdon{background:rgba(100,116,139,.2);color:var(--muted2);border:1px solid var(--border);}
+/* Body */
+.cbody{padding:12px 14px 0;}
+.ccat{font-size:9px;color:var(--accent3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+.ctitle{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;line-height:1.4;margin-bottom:6px;}
+.ctext{font-size:10px;color:var(--muted2);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px;white-space:pre-line;}
+.cbtns{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;}
+.cbtnchip{padding:3px 8px;border-radius:4px;font-size:9px;background:rgba(124,58,237,.12);color:var(--accent3);border:1px solid rgba(124,58,237,.22);}
+.admeta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.adtag{padding:2px 6px;border-radius:4px;font-size:9px;background:var(--bg3);color:var(--muted2);border:1px solid var(--border);}
+.adprice{padding:2px 7px;border-radius:4px;font-size:9px;font-weight:700;background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+/* Actions */
+.cact{display:flex;gap:5px;padding:10px 14px 14px;border-top:1px solid rgba(255,255,255,.04);}
+.cab{flex:1;padding:7px 4px;border-radius:10px;border:none;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.csen{background:var(--accent);color:#fff;}
+.csen:hover{background:var(--accent2);}
+.cedt{background:var(--bg3);color:var(--muted2);border:1px solid var(--border);}
+.cedt:hover{border-color:var(--accent);color:var(--text);}
+.cdel{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.cdel:hover{background:rgba(239,68,68,.2);}
+
+/* INFO CARD */
+.ic{background:var(--cb);border:1px solid var(--cc);border-radius:16px;padding:16px;margin-bottom:12px;}
+.ict{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted2);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.icl{flex:1;height:1px;background:var(--border);}
+
+/* TABLE */
 .tbl{width:100%;border-collapse:collapse;}
-.tbl th{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
-.tbl td{padding:10px;border-bottom:1px solid rgba(42,42,58,.5);vertical-align:middle;}
+.tbl th{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted2);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.tbl td{padding:10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
 .tbl tr:last-child td{border-bottom:none;}
 .tbl tr:hover td{background:rgba(124,58,237,.04);}
+[data-theme="minimal"] .tbl tr:hover td{background:rgba(0,0,0,.02);}
+.av{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--blue));display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.rl{padding:2px 7px;border-radius:5px;font-size:9px;font-weight:700;}
+.rlo{background:rgba(168,85,247,.15);color:var(--accent2);border:1px solid rgba(168,85,247,.3);}
+.rla{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.3);}
+.rle{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.2);}
 
-.st{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;}
-.st-pub,.st-act{background:rgba(16,185,129,.12);color:var(--green);}
-.st-drf{background:rgba(100,116,139,.12);color:var(--muted);}
-.st-sch,.st-pen{background:rgba(245,158,11,.12);color:var(--yellow);}
-.st-can,.st-del{background:rgba(239,68,68,.12);color:var(--red);}
+/* SHEET */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.82);display:flex;align-items:flex-end;justify-content:center;z-index:500;backdrop-filter:blur(14px);}
+.sh-box{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:20px 20px 30px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;animation:su .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes su{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.sh-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:0 auto 16px;}
+.sh-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;}
+.sh-close{background:none;border:none;color:var(--muted2);font-size:22px;cursor:pointer;padding:4px;transition:color .2s;}
+.sh-close:hover{color:var(--text);}
 
-.btn{padding:8px 16px;border-radius:7px;border:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
-.bp{background:var(--accent);color:white;}
+/* FORM */
+.fg{margin-bottom:14px;position:relative;}
+.fl{font-size:9px;color:var(--muted2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;display:block;}
+.fi,.fs,.fta{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'Space Mono',monospace;font-size:11px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow);}
+.fta{resize:vertical;min-height:80px;line-height:1.6;}
+.fs option{background:var(--bg3);}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fa{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;}
+
+/* AI SUGGEST */
+.ais{margin-top:8px;padding:10px 12px;background:rgba(124,58,237,.06);border:1px solid rgba(124,58,237,.2);border-radius:8px;font-size:10px;line-height:1.6;color:var(--muted2);display:none;position:relative;}
+.ais.show{display:block;}
+.ail{font-size:9px;color:var(--accent3);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.aiu{position:absolute;top:8px;right:8px;padding:3px 8px;border-radius:5px;border:none;background:var(--accent);color:#fff;font-size:9px;font-family:'Space Mono',monospace;cursor:pointer;}
+
+/* POSTER GEN */
+.pgen{border:2px dashed var(--border2);border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:8px;}
+.pgen:hover{border-color:var(--accent);background:rgba(124,58,237,.04);}
+.pgen-ic{font-size:26px;margin-bottom:5px;}
+.pgen-tx{font-size:10px;color:var(--muted2);}
+
+/* INLINE BTNS EDITOR */
+.ibte{display:flex;flex-direction:column;gap:6px;}
+.ibr{display:flex;gap:6px;align-items:center;}
+.ibrm{background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:2px;}
+.ibadd{padding:6px;border:1px dashed var(--border2);border-radius:8px;background:transparent;color:var(--muted2);font-size:11px;cursor:pointer;transition:all .2s;font-family:'Space Mono',monospace;}
+.ibadd:hover{border-color:var(--accent);color:var(--accent3);}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:10px;border:none;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.bp{background:var(--accent);color:#fff;box-shadow:0 4px 15px var(--glow);}
 .bp:hover{background:var(--accent2);transform:translateY(-1px);}
-.bg{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.bg{background:var(--bg3);color:var(--muted2);border:1px solid var(--border);}
 .bg:hover{border-color:var(--accent);color:var(--text);}
 .bd{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);}
-.bsuc{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);}
-.bsm{padding:4px 10px;font-size:10px;}
+.bsm{padding:5px 10px;font-size:9px;}
+.bfw{width:100%;}
 
-.fg{margin-bottom:14px;}
-.fl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;}
-.fi,.fs,.fta{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;}
-.fi:focus,.fs:focus,.fta:focus{border-color:var(--accent);}
-.fta{resize:vertical;min-height:90px;line-height:1.6;}
-.fs option{background:var(--bg3);}
-.fr2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.fa{display:flex;gap:8px;margin-top:16px;}
+/* FINANCE */
+.frow{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.frow:last-child{border-bottom:none;}
+.frl{font-size:11px;color:var(--muted2);}
+.frv{font-size:13px;font-weight:700;}
+.frvg{color:var(--green);}
 
-.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
-.stit{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;}
+/* PROGRESS */
+.prr{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.prl{width:80px;font-size:10px;color:var(--muted2);flex-shrink:0;}
+.prw{flex:1;height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.prb{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.prv{width:45px;text-align:right;font-size:10px;color:var(--muted2);}
 
-.tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--bg2);border-radius:8px;padding:4px;overflow-x:auto;}
-.tab{padding:6px 12px;border:none;background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;border-radius:6px;transition:all .2s;white-space:nowrap;}
-.tab.active{background:var(--accent);color:white;}
+/* CHART */
+.chw{height:160px;position:relative;margin-top:8px;}
 
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.87);display:flex;align-items:flex-end;justify-content:center;z-index:1000;backdrop-filter:blur(8px);}
-.mb{background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;animation:su .3s ease;}
-@keyframes su{from{transform:translateY(100%);}to{transform:translateY(0);}}
-.mt{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
-.mc{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
+/* PANIC */
+.panic{border:2px solid rgba(239,68,68,.3);border-radius:16px;background:rgba(239,68,68,.04);padding:16px;margin-top:12px;}
+.pbtn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(239,68,68,.3);}
+.pbtn:hover{transform:scale(1.02);box-shadow:0 6px 30px rgba(239,68,68,.5);}
 
-.pr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.pl{width:90px;font-size:11px;color:var(--muted);}
-.pw{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
-.pb{height:100%;border-radius:3px;transition:width 1s ease;}
-.pv{width:50px;text-align:right;font-size:11px;}
+/* THEME */
+.thgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;}
+.thcard{border:2px solid var(--border);border-radius:14px;padding:12px 10px;cursor:pointer;text-align:center;transition:all .25s;}
+.thcard.active,.thcard:hover{border-color:var(--accent);transform:scale(1.03);}
+.thprev{height:30px;border-radius:8px;margin-bottom:8px;}
+.thname{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
 
-.chw{position:relative;height:180px;margin-top:8px;}
+/* INBOX */
+.urow{background:rgba(124,58,237,.05);}
+.msrc{padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;}
+.sig{background:rgba(236,72,153,.15);color:var(--pink);}
+.stt{background:rgba(0,0,0,.4);color:#fff;border:1px solid #333;}
+.stg{background:rgba(59,130,246,.15);color:var(--blue);}
+.swrn{background:rgba(239,68,68,.15);color:var(--red);}
 
-.fi-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(42,42,58,.4);}
-.fi-row:last-child{border-bottom:none;}
-.fi-lbl{font-size:12px;color:var(--muted);}
-.fi-val{font-size:13px;font-weight:600;}
-.fi-val.g{color:var(--green);}
-.fi-val.r{color:var(--red);}
+/* SETUP */
+.sov{position:fixed;inset:0;background:rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(20px);}
+.sbox{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px;width:90%;max-width:380px;}
 
-.av{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--blue));display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;}
-.rl{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
-.rl-o{background:rgba(168,85,247,.15);color:var(--accent2);border:1px solid rgba(168,85,247,.3);}
-.rl-a{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.3);}
-.rl-e{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+/* TOAST */
+.toast-el{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:10px 20px;font-size:11px;font-family:'Space Mono',monospace;color:var(--text);z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 30px rgba(0,0,0,.5);white-space:nowrap;}
+.toast-el.show{transform:translateX(-50%) translateY(0);}
 
-.feed-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(42,42,58,.4);}
-.feed-item:last-child{border-bottom:none;}
-.feed-ic{width:28px;height:28px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-
-.poster-banner{height:110px;background:linear-gradient(135deg,#1e0a3c,#0d1b4b);display:flex;align-items:center;justify-content:center;font-size:44px;border-radius:10px 10px 0 0;}
-
-.setup-ov{position:fixed;inset:0;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(12px);}
-.setup-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:90%;max-width:380px;}
-
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-::-webkit-scrollbar-thumb:hover{background:var(--accent);}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="logo">OMNI-CONTROL</div>
-  <div class="hdr-r">
-    <div class="dot"></div>
-    <button class="btn-api" onclick="showSetup()">⚙ API</button>
-  </div>
+<header class="hdr">
+  <div class="logo">OMNI·CTRL</div>
+  <div class="hdr-r"><div class="ldot"></div><button class="btn bg bsm" onclick="showSetup()" style="font-size:9px">⚙ API</button></div>
 </header>
 
 <nav class="nav">
-  <button class="nb active" onclick="gp('dashboard',this)">📊 Дашборд</button>
+  <button class="nb active" onclick="gp('dash',this)">📊 Дашборд</button>
   <button class="nb" onclick="gp('content',this)">📦 Контент</button>
   <button class="nb" onclick="gp('ads',this)">💼 Реклама</button>
-  <button class="nb" onclick="gp('finance',this)">💰 Финансы</button>
-  <button class="nb" onclick="gp('team',this)">👥 Команда<span class="bdg" id="rBdg">0</span></button>
   <button class="nb" onclick="gp('hero',this)">🌟 Персонаж</button>
-  <button class="nb" onclick="gp('inbox',this)">📨 Инбокс<span class="bdg" id="inbBdg">0</span></button>
-  <button class="nb" onclick="gp('logs',this)">📋 Логи</button>
-  <button class="nb" onclick="gp('analytics',this)">📊 Аналитика</button>
-  <button class="nb" onclick="gp('bset',this)">⚙️ Настройки</button>
+  <button class="nb" onclick="gp('team',this)">👥 Команда</button>
+  <button class="nb" onclick="gp('inbox',this)">📨 Инбокс<span class="bdg" id="inbBdg">3</span></button>
+  <button class="nb" onclick="gp('finance',this)">💰 Финансы</button>
+  <button class="nb" onclick="gp('settings',this)">⚙️ Настройки</button>
 </nav>
 
-<!-- ██ DASHBOARD ██ -->
-<div id="page-dashboard" class="page active">
+<!-- DASHBOARD -->
+<div id="page-dash" class="page active">
+  <div class="sh"><div class="stit">Дашборд <span>2026</span></div></div>
   <div class="g4">
-    <div class="stat" style="--al:var(--accent2)"><div class="sl">Постов</div><div class="sv" id="s-p">—</div><div class="ss">всего</div></div>
-    <div class="stat" style="--al:var(--green)"><div class="sl">Реклама</div><div class="sv" id="s-a">—</div><div class="ss">активных</div></div>
-    <div class="stat" style="--al:var(--blue)"><div class="sl">Команда</div><div class="sv" id="s-t">—</div><div class="ss">участников</div></div>
-    <div class="stat" style="--al:var(--yellow)"><div class="sl">Заявки</div><div class="sv" id="s-r">—</div><div class="ss">ожидают</div></div>
+    <div class="stat" style="--al:var(--accent2)"><div class="sl">Контент</div><div class="sv" id="sp">0</div><div class="ss">карточек</div></div>
+    <div class="stat" style="--al:var(--green)"><div class="sl">Реклама</div><div class="sv" id="sa">0</div><div class="ss">активных</div></div>
+    <div class="stat" style="--al:var(--pink)"><div class="sl">Доход</div><div class="sv" id="sinc">0</div><div class="ss">UAH</div></div>
+    <div class="stat" style="--al:var(--yellow)"><div class="sl">Инбокс</div><div class="sv" id="sr">0</div><div class="ss">новых</div></div>
   </div>
-  <div class="g2">
-    <div class="card"><div class="ct">Публикации <span class="ctl"></span></div><div class="chw"><canvas id="cPosts"></canvas></div></div>
-    <div class="card"><div class="ct">Статусы <span class="ctl"></span></div><div class="chw"><canvas id="cStatus"></canvas></div></div>
+  <div class="ic"><div class="ict">Статистика постинга <span class="icl"></span></div><div class="chw"><canvas id="cDash"></canvas></div></div>
+  <div class="ic">
+    <div class="ict">ROI рекламы <span class="icl"></span></div>
+    <div class="prr"><div class="prl">Impressions</div><div class="prw"><div class="prb" id="bI" style="background:var(--accent2)"></div></div><div class="prv" id="vI">—</div></div>
+    <div class="prr"><div class="prl">Clicks</div><div class="prw"><div class="prb" id="bC" style="background:var(--blue)"></div></div><div class="prv" id="vC">—</div></div>
+    <div class="prr"><div class="prl">CTR</div><div class="prw"><div class="prb" id="bT" style="background:var(--green)"></div></div><div class="prv" id="vT">—</div></div>
   </div>
-  <div class="card"><div class="ct">Активность <span class="ctl"></span></div><div id="feed">—</div></div>
-  <div class="card">
-    <div class="ct">Рекламный ROI <span class="ctl"></span></div>
-    <div class="pr"><div class="pl">Impressions</div><div class="pw"><div class="pb" id="bI" style="background:var(--accent2)"></div></div><div class="pv" id="vI">—</div></div>
-    <div class="pr"><div class="pl">Clicks</div><div class="pw"><div class="pb" id="bC" style="background:var(--blue)"></div></div><div class="pv" id="vC">—</div></div>
-    <div class="pr"><div class="pl">CTR</div><div class="pw"><div class="pb" id="bT" style="background:var(--green)"></div></div><div class="pv" id="vT">—</div></div>
+  <div class="panic">
+    <div style="font-size:9px;color:var(--muted2);text-align:center;margin-bottom:10px;letter-spacing:1px">ЭКСТРЕННАЯ ОСТАНОВКА ВСЕХ ПУБЛИКАЦИЙ</div>
+    <button class="pbtn" onclick="doPanic()">🚨 PANIC MODE</button>
   </div>
 </div>
 
-<!-- ██ CONTENT ██ -->
+<!-- CONTENT -->
 <div id="page-content" class="page">
-  <div class="sh"><div class="stit">Контент</div><button class="btn bp bsm" onclick="om('m-post')">+ Новый пост</button></div>
-  <div class="tabs">
-    <button class="tab active" onclick="fCon('all',this)">Все</button>
-    <button class="tab" onclick="fCon('published',this)">Опубликованные</button>
-    <button class="tab" onclick="fCon('draft',this)">Черновики</button>
-    <button class="tab" onclick="fCon('scheduled',this)">Запланированные</button>
+  <div class="sh"><div class="stit">Контент</div><button class="btn bp bsm" onclick="openPost()">+ Карточка</button></div>
+  <div class="cbar" id="conCatBar"></div>
+  <div class="cbar" id="conStatusBar">
+    <div class="chip active" onclick="fConSt('all',this)">Все</div>
+    <div class="chip" onclick="fConSt('published',this)">📤 Опубликованные</div>
+    <div class="chip" onclick="fConSt('draft',this)">📝 Черновики</div>
+    <div class="chip" onclick="fConSt('scheduled',this)">⏳ Запланированные</div>
   </div>
-  <div class="card">
-    <div class="ct">Категории <span class="ctl"></span><button class="btn bg bsm" onclick="om('m-cat')">+ Добавить</button></div>
-    <div id="catList" style="display:flex;flex-wrap:wrap;gap:6px">—</div>
-  </div>
-  <div class="card" style="padding:0;overflow:hidden">
-    <table class="tbl">
-      <thead><tr><th>Пост</th><th>Статус</th><th>Дата</th><th>Действия</th></tr></thead>
-      <tbody id="conTbl"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
-    </table>
-  </div>
+  <div class="cgrid" id="contentCards"></div>
 </div>
 
-<!-- ██ ADS ██ -->
+<!-- ADS -->
 <div id="page-ads" class="page">
-  <div class="sh"><div class="stit">Реклама</div><button class="btn bp bsm" onclick="om('m-ad')">+ Кампания</button></div>
-  <div class="g4">
-    <div class="stat" style="--al:var(--green)"><div class="sl">Активных</div><div class="sv" id="aAct">—</div></div>
-    <div class="stat" style="--al:var(--yellow)"><div class="sl">Ожидают</div><div class="sv" id="aPen">—</div></div>
-    <div class="stat" style="--al:var(--accent2)"><div class="sl">Бюджет</div><div class="sv" id="aBud">—</div></div>
-    <div class="stat" style="--al:var(--blue)"><div class="sl">Ср. CTR</div><div class="sv" id="aCtr">—</div></div>
+  <div class="sh"><div class="stit">Реклама</div><button class="btn bp bsm" onclick="openAd()">+ Кампания</button></div>
+  <div class="g4" style="margin-bottom:12px">
+    <div class="stat" style="--al:var(--green)"><div class="sl">В канале</div><div class="sv" id="adAct">0</div></div>
+    <div class="stat" style="--al:var(--yellow)"><div class="sl">В очереди</div><div class="sv" id="adPen">0</div></div>
+    <div class="stat" style="--al:var(--muted)"><div class="sl">Закончилась</div><div class="sv" id="adDon">0</div></div>
+    <div class="stat" style="--al:var(--green)"><div class="sl">Доход</div><div class="sv" id="adInc">0</div></div>
   </div>
-  <div class="card" style="padding:0;overflow:hidden">
+  <div class="cbar" id="adFilterBar">
+    <div class="chip active" onclick="fAds('all',this)">Все</div>
+    <div class="chip" onclick="fAds('active',this)">📢 В канале</div>
+    <div class="chip" onclick="fAds('pending',this)">⏳ В очереди</div>
+    <div class="chip" onclick="fAds('done',this)">✅ Закончилась</div>
+  </div>
+  <div class="cgrid" id="adsCards"></div>
+</div>
+
+<!-- HERO -->
+<div id="page-hero" class="page">
+  <div class="sh"><div class="stit">Персонаж</div><button class="btn bp bsm" onclick="openHero()">+ Карточка</button></div>
+  <div style="font-size:10px;color:var(--muted2);margin-bottom:14px;line-height:1.6">До 6 карточек — бот показывает случайную над пультом. Активно: <strong id="hcount" style="color:var(--accent2)">0</strong>/6</div>
+  <div class="cgrid" id="heroCards"></div>
+</div>
+
+<!-- TEAM -->
+<div id="page-team" class="page">
+  <div class="stit" style="margin-bottom:14px">Команда</div>
+  <div id="reqBlock" style="display:none">
+    <div class="ic" style="border-color:rgba(245,158,11,.3)">
+      <div class="ict" style="color:var(--yellow)">⚠ Заявки <span class="icl"></span></div>
+      <div id="reqList"></div>
+    </div>
+  </div>
+  <div class="ic" style="padding:0;overflow:hidden">
     <table class="tbl">
-      <thead><tr><th>Кампания</th><th>Рекламодатель</th><th>Статус</th><th>CTR</th><th>Бюджет</th><th></th></tr></thead>
-      <tbody id="adsTbl"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
+      <thead><tr><th>Участник</th><th>Роль</th><th>ID</th><th>Дата</th><th></th></tr></thead>
+      <tbody id="teamTbl"></tbody>
     </table>
   </div>
 </div>
 
-<!-- ██ FINANCE ██ -->
+<!-- INBOX -->
+<div id="page-inbox" class="page">
+  <div class="sh"><div class="stit">Инбокс</div></div>
+  <div class="cbar">
+    <div class="chip active" onclick="fInbox('all',this)">Все</div>
+    <div class="chip" onclick="fInbox('unread',this)">🔵 Новые</div>
+    <div class="chip" onclick="fInbox('warn',this)">⚠️ Нарушения</div>
+    <div class="chip" onclick="fInbox('starred',this)">⭐ Важные</div>
+    <div class="chip" onclick="fInbox('archived',this)">Архив</div>
+  </div>
+  <div class="ic" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr><th>От кого</th><th>Сообщение</th><th>Соцсеть</th><th>Время</th><th></th></tr></thead>
+      <tbody id="inboxTbl"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FINANCE -->
 <div id="page-finance" class="page">
   <div class="stit" style="margin-bottom:14px">Финансы</div>
   <div class="g4">
-    <div class="stat" style="--al:var(--green)"><div class="sl">Доход</div><div class="sv" id="fInc">—</div><div class="ss" style="color:var(--green)">UAH</div></div>
-    <div class="stat" style="--al:var(--red)"><div class="sl">Расходы</div><div class="sv" id="fExp">—</div><div class="ss" style="color:var(--red)">UAH</div></div>
-    <div class="stat" style="--al:var(--accent2)"><div class="sl">Прибыль</div><div class="sv" id="fPro">—</div><div class="ss">UAH</div></div>
-    <div class="stat" style="--al:var(--blue)"><div class="sl">Кампаний</div><div class="sv" id="fCam">—</div></div>
+    <div class="stat" style="--al:var(--green)"><div class="sl">Доход</div><div class="sv" id="fInc">0</div><div class="ss" style="color:var(--green)">UAH</div></div>
+    <div class="stat" style="--al:var(--red)"><div class="sl">Расходы</div><div class="sv" id="fExp">0</div></div>
+    <div class="stat" style="--al:var(--accent2)"><div class="sl">Прибыль</div><div class="sv" id="fPro">0</div></div>
+    <div class="stat" style="--al:var(--blue)"><div class="sl">Кампаний</div><div class="sv" id="fCam">0</div></div>
   </div>
-  <div class="card"><div class="ct">По рекламодателям <span class="ctl"></span></div><div id="finTbl">—</div></div>
-  <div class="card">
-    <div class="ct">Сводка <span class="ctl"></span></div>
-    <div class="fi-row"><div class="fi-lbl">Общий бюджет</div><div class="fi-val g" id="fTot">—</div></div>
-    <div class="fi-row"><div class="fi-lbl">Средний бюджет</div><div class="fi-val" id="fAvg">—</div></div>
-    <div class="fi-row"><div class="fi-lbl">Активных кампаний</div><div class="fi-val" id="fAct2">—</div></div>
-    <div class="fi-row"><div class="fi-lbl">Завершённых</div><div class="fi-val" id="fDone">—</div></div>
+  <div class="ic"><div class="ict">По клиентам <span class="icl"></span></div><div id="finTable"></div></div>
+  <div class="ic">
+    <div class="ict">Сводка <span class="icl"></span></div>
+    <div class="frow"><div class="frl">Общий бюджет</div><div class="frv frvg" id="fTot">0 UAH</div></div>
+    <div class="frow"><div class="frl">Средний бюджет</div><div class="frv" id="fAvg">0 UAH</div></div>
+    <div class="frow"><div class="frl">Активных</div><div class="frv" id="fAct2">0</div></div>
+    <div class="frow"><div class="frl">Завершённых</div><div class="frv" id="fDone">0</div></div>
   </div>
 </div>
 
-<!-- ██ TEAM ██ -->
-<div id="page-team" class="page">
-  <div class="stit" style="margin-bottom:14px">Команда</div>
-  <div id="reqBlk" style="display:none">
-    <div class="card" style="border-color:rgba(245,158,11,.3)">
-      <div class="ct" style="color:var(--yellow)">⚠ Заявки на вступление <span class="ctl"></span></div>
-      <div id="reqLst"></div>
+<!-- SETTINGS -->
+<div id="page-settings" class="page">
+  <div class="stit" style="margin-bottom:14px">Настройки</div>
+  <div class="ic">
+    <div class="ict">Тема оформления <span class="icl"></span></div>
+    <div class="thgrid">
+      <div class="thcard active" onclick="setTheme('cyber',this)" id="th-cyber"><div class="thprev" style="background:linear-gradient(135deg,#070710,#7c3aed)"></div><div class="thname">Cyberpunk</div></div>
+      <div class="thcard" onclick="setTheme('rose',this)" id="th-rose"><div class="thprev" style="background:linear-gradient(135deg,#0f0810,#ec4899)"></div><div class="thname">Rose Dark</div></div>
+      <div class="thcard" onclick="setTheme('minimal',this)" id="th-minimal"><div class="thprev" style="background:linear-gradient(135deg,#fafafa,#1a1a1a)"></div><div class="thname">Minimal</div></div>
+      <div class="thcard" onclick="setTheme('aurora',this)" id="th-aurora"><div class="thprev" style="background:linear-gradient(135deg,#030810,#00d4ff)"></div><div class="thname">Aurora</div></div>
+      <div class="thcard" onclick="setTheme('lux',this)" id="th-lux"><div class="thprev" style="background:linear-gradient(135deg,#0a0800,#d4a017)"></div><div class="thname">Luxury Gold</div></div>
     </div>
   </div>
-  <div class="card" style="padding:0;overflow:hidden">
-    <table class="tbl">
-      <thead><tr><th>Участник</th><th>Роль</th><th>Telegram ID</th><th>Дата</th><th>Действия</th></tr></thead>
-      <tbody id="teamTbl"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
-    </table>
+  <div class="ic">
+    <div class="ict">Основное <span class="icl"></span></div>
+    <div class="fg"><label class="fl">Username бота</label><input class="fi" id="set-bn" placeholder="@YourBot"></div>
+    <div class="fg"><label class="fl">ID канала</label><input class="fi" id="set-ch" placeholder="-1001234567890"></div>
+    <div class="fg"><label class="fl">Язык</label><select class="fs" id="set-lg"><option value="ru">🇷🇺 Русский</option><option value="uk">🇺🇦 Українська</option></select></div>
+    <button class="btn bp bsm" onclick="toast('✅ Сохранено!')">💾 Сохранить</button>
+  </div>
+  <div class="ic">
+    <div class="ict">Уведомления <span class="icl"></span></div>
+    <div class="frow"><div class="frl">Нарушения в комментах</div><label style="cursor:pointer"><input type="checkbox" checked> <span style="font-size:10px">Вкл</span></label></div>
+    <div class="frow"><div class="frl">Новый пост/рилс в соцсетях</div><label style="cursor:pointer"><input type="checkbox" checked> <span style="font-size:10px">Вкл</span></label></div>
+    <div class="frow"><div class="frl">Старт стрима</div><label style="cursor:pointer"><input type="checkbox" checked> <span style="font-size:10px">Вкл</span></label></div>
+    <div class="frow"><div class="frl">Заявки в команду</div><label style="cursor:pointer"><input type="checkbox" checked> <span style="font-size:10px">Вкл</span></label></div>
   </div>
 </div>
 
-<!-- ██ HERO ██ -->
-<div id="page-hero" class="page">
-  <div class="sh"><div class="stit">Персонаж</div><button class="btn bp bsm" onclick="openEditHero()">✏️ Редактировать</button></div>
-  <div class="card" style="padding:0;overflow:hidden">
-    <div class="poster-banner" id="hBanner">🌟</div>
-    <div style="padding:14px">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px" id="hName">Загрузка...</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.6" id="hBio">—</div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="ct">Биографии <span class="ctl"></span></div>
-    <div class="fi-row"><div class="fi-lbl">🇷🇺 RU</div><div style="font-size:11px;max-width:65%;text-align:right" id="hBioRu">—</div></div>
-    <div class="fi-row"><div class="fi-lbl">🇺🇦 UK</div><div style="font-size:11px;max-width:65%;text-align:right" id="hBioUk">—</div></div>
-    <div class="fi-row"><div class="fi-lbl">🇬🇧 EN</div><div style="font-size:11px;max-width:65%;text-align:right" id="hBioEn">—</div></div>
-  </div>
-  <div class="card"><div class="ct">Личность <span class="ctl"></span></div><div id="hPers" style="font-size:12px;color:var(--muted);line-height:1.7">—</div></div>
+<!-- ══ SHEETS ══ -->
 
-  <div class="card">
-    <div class="ct">🖼 Постер над пультом <span class="ctl"></span><button class="btn bg bsm" onclick="om('m-poster')">+ Добавить</button></div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Бот показывает рандомный вариант при каждом входе пользователя</div>
-    <div id="posterList">—</div>
-  </div>
-</div>
-
-<!-- ██ INBOX ██ -->
-<div id="page-inbox" class="page">
-  <div class="sh"><div class="stit">Инбокс</div></div>
-  <div class="tabs">
-    <button class="tab active" onclick="fInbox('all',this)">Все</button>
-    <button class="tab" onclick="fInbox('unread',this)">Непрочитанные</button>
-    <button class="tab" onclick="fInbox('starred',this)">⭐ Важные</button>
-    <button class="tab" onclick="fInbox('archived',this)">Архив</button>
-  </div>
-  <div class="card" style="padding:0;overflow:hidden">
-    <table class="tbl">
-      <thead><tr><th>От кого</th><th>Сообщение</th><th>Источник</th><th>Время</th><th>Действия</th></tr></thead>
-      <tbody id="inboxTbl"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- ██ LOGS ██ -->
-<div id="page-logs" class="page">
-  <div class="sh"><div class="stit">Логи действий</div></div>
-  <div class="tabs">
-    <button class="tab active" onclick="fLog('all',this)">Все</button>
-    <button class="tab" onclick="fLog('publish',this)">Публикации</button>
-    <button class="tab" onclick="fLog('ban',this)">Баны</button>
-    <button class="tab" onclick="fLog('role',this)">Роли</button>
-    <button class="tab" onclick="fLog('panic',this)">Panic</button>
-  </div>
-  <div class="card" style="padding:0;overflow:hidden">
-    <table class="tbl">
-      <thead><tr><th>Действие</th><th>Автор</th><th>Объект</th><th>Время</th></tr></thead>
-      <tbody id="logsTbl"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- ██ ANALYTICS ██ -->
-<div id="page-analytics" class="page">
-  <div class="sh"><div class="stit">Аналитика</div></div>
-  <div class="tabs">
-    <button class="tab active" onclick="fAnal(7,this)">7 дней</button>
-    <button class="tab" onclick="fAnal(30,this)">30 дней</button>
-    <button class="tab" onclick="fAnal(0,this)">Всё время</button>
-  </div>
-  <div class="g4">
-    <div class="stat" style="--al:var(--accent2)"><div class="sl">Постов</div><div class="sv" id="an-p">—</div></div>
-    <div class="stat" style="--al:var(--green)"><div class="sl">Опубликовано</div><div class="sv" id="an-pub">—</div></div>
-    <div class="stat" style="--al:var(--muted)"><div class="sl">Черновики</div><div class="sv" id="an-drf">—</div></div>
-    <div class="stat" style="--al:var(--blue)"><div class="sl">Конверсия</div><div class="sv" id="an-cv">—</div></div>
-  </div>
-  <div class="card"><div class="ct">Последние посты <span class="ctl"></span></div><div id="analPosts">—</div></div>
-  <div class="card">
-    <div class="ct">Рекламная статистика <span class="ctl"></span></div>
-    <div class="fi-row"><div class="fi-lbl">Показы</div><div class="fi-val" id="an-imp">—</div></div>
-    <div class="fi-row"><div class="fi-lbl">Клики</div><div class="fi-val" id="an-clk">—</div></div>
-    <div class="fi-row"><div class="fi-lbl">CTR</div><div class="fi-val g" id="an-ctr">—</div></div>
-    <div class="fi-row"><div class="fi-lbl">Доход от рекламы</div><div class="fi-val g" id="an-inc">—</div></div>
-  </div>
-</div>
-
-<!-- ██ BOT SETTINGS ██ -->
-<div id="page-bset" class="page">
-  <div class="stit" style="margin-bottom:14px">Настройки бота</div>
-  <div class="card">
-    <div class="ct">Основное <span class="ctl"></span></div>
-    <div class="fg"><label class="fl">Название / Username бота</label><input class="fi" id="set-bn" placeholder="@YourBot"></div>
-    <div class="fg"><label class="fl">ID канала публикаций</label><input class="fi" id="set-ch" placeholder="-1001234567890"></div>
-    <div class="fg"><label class="fl">Язык по умолчанию</label>
-      <select class="fs" id="set-lg"><option value="ru">🇷🇺 Русский</option><option value="uk">🇺🇦 Українська</option><option value="en">🇬🇧 English</option></select>
-    </div>
-  </div>
-  <div class="card">
-    <div class="ct">Уведомления <span class="ctl"></span></div>
-    <div class="fi-row"><div class="fi-lbl">Новые заявки</div><label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="n-req" checked><span style="font-size:11px">Включено</span></label></div>
-    <div class="fi-row"><div class="fi-lbl">Публикация поста</div><label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="n-pub" checked><span style="font-size:11px">Включено</span></label></div>
-    <div class="fi-row"><div class="fi-lbl">Новая реклама</div><label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="n-ads"><span style="font-size:11px">Включено</span></label></div>
-    <div class="fi-row"><div class="fi-lbl">Panic Mode</div><label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="n-pan" checked><span style="font-size:11px">Включено</span></label></div>
-  </div>
-  <div class="card">
-    <div class="ct">Планировщик <span class="ctl"></span></div>
-    <div class="fg"><label class="fl">Интервал проверки (мин)</label><input class="fi" id="set-int" type="number" value="1" min="1" max="60"></div>
-    <div class="fg"><label class="fl">Авто-удаление рекламы (ч)</label><input class="fi" id="set-del" type="number" value="24" min="1"></div>
-  </div>
-  <div style="display:flex;gap:10px;flex-wrap:wrap">
-    <button class="btn bp" onclick="saveBotSettings()">💾 Сохранить настройки</button>
-    <button class="btn bd" onclick="confirmRestart()">🔄 Перезапустить бота</button>
-  </div>
-</div>
-
-<!-- ════ MODALS ════ -->
-
-<!-- New Post -->
-<div id="m-post" class="mo" style="display:none" onclick="if(event.target===this)cm('m-post')">
-<div class="mb">
-  <div class="mt">Новый пост <button class="mc" onclick="cm('m-post')">✕</button></div>
+<!-- POST SHEET -->
+<div id="ov-post" class="ov" style="display:none" onclick="if(event.target===this)cls('ov-post')">
+<div class="sh-box">
+  <div class="sh-handle"></div>
+  <div class="sh-title">Карточка контента <button class="sh-close" onclick="cls('ov-post')">✕</button></div>
+  <input type="hidden" id="post-eid">
+  <div class="fg"><label class="fl">Категория</label><select class="fs" id="post-cat"></select></div>
   <div class="fg">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <label class="fl" style="margin:0">Текст RU</label>
-      <button class="btn bg bsm" onclick="aiGenPost()" style="font-size:9px">🤖 AI генерация</button>
-    </div>
-    <textarea class="fta" id="pt-ru" placeholder="Текст на русском..."></textarea>
+    <label class="fl">Постер</label>
+    <div class="pgen" onclick="openPosterGen('post-purl')"><div class="pgen-ic">🖼</div><div class="pgen-tx">Нажми для AI-генерации постера<br><span style="font-size:9px;opacity:.6">или вставь URL ниже</span></div></div>
+    <input class="fi" id="post-purl" placeholder="URL изображения (необязательно)" style="margin-top:6px" oninput="previewUrl(this,'post-prev')">
+    <div id="post-prev" style="display:none;margin-top:8px"><img id="post-prev-img" style="width:100%;border-radius:10px" src=""></div>
   </div>
-  <div class="fg"><label class="fl">Текст UK</label><textarea class="fta" id="pt-uk" placeholder="Текст українською..."></textarea></div>
   <div class="fg">
-    <label class="fl">Медиа (URL изображения)</label>
-    <input class="fi" id="pt-media" placeholder="https://... или оставь пустым">
+    <label class="fl">Текст поста</label>
+    <textarea class="fta" id="post-text" placeholder="Напиши текст..." oninput="aiSug(this,'ais-post','aisp-text')"></textarea>
+    <div class="ais" id="ais-post"><div class="ail">🤖 Вариант AI</div><div id="aisp-text" style="white-space:pre-line"></div><button class="aiu" onclick="useAi('post-text','ais-post','aisp-text')">Использовать</button></div>
   </div>
-  <div class="fr2">
-    <div class="fg"><label class="fl">Категория</label><select class="fs" id="pt-cat"><option value="">— Без категории</option></select></div>
-    <div class="fg"><label class="fl">Статус</label>
-      <select class="fs" id="pt-st" onchange="document.getElementById('pt-sw').style.display=this.value==='scheduled'?'block':'none'">
-        <option value="draft">📝 Черновик</option>
-        <option value="scheduled">⏳ Запланировать</option>
-        <option value="published">📤 Опубликовать сейчас</option>
-      </select>
+  <div class="fg">
+    <label class="fl">Inline-кнопки</label>
+    <div class="ibte" id="post-btns">
+      <div class="ibr"><input class="fi" placeholder="Текст кнопки" style="flex:1"><input class="fi" placeholder="URL" style="flex:1.5"><button class="ibrm" onclick="this.closest('.ibr').remove()">✕</button></div>
     </div>
+    <button class="ibadd" onclick="addBtn('post-btns')" style="width:100%;margin-top:6px">+ Добавить кнопку</button>
   </div>
-  <div id="pt-sw" style="display:none" class="fg"><label class="fl">Дата и время</label><input class="fi" type="datetime-local" id="pt-dt"></div>
-  <div class="fa">
-    <button class="btn bp" onclick="createPost()">💾 Сохранить</button>
-    <button class="btn bg" onclick="cm('m-post')">Отмена</button>
-  </div>
-</div></div>
-
-<!-- Edit Post -->
-<div id="m-edit-post" class="mo" style="display:none" onclick="if(event.target===this)cm('m-edit-post')">
-<div class="mb">
-  <div class="mt">Редактировать пост <button class="mc" onclick="cm('m-edit-post')">✕</button></div>
-  <input type="hidden" id="ep-id">
-  <div class="fg"><label class="fl">Текст RU</label><textarea class="fta" id="ep-ru"></textarea></div>
-  <div class="fg"><label class="fl">Текст UK</label><textarea class="fta" id="ep-uk"></textarea></div>
   <div class="fr2">
     <div class="fg"><label class="fl">Статус</label>
-      <select class="fs" id="ep-st">
-        <option value="draft">📝 Черновик</option>
-        <option value="scheduled">⏳ Запланировать</option>
-        <option value="published">📤 Опубликован</option>
+      <select class="fs" id="post-st" onchange="g('post-sw').style.display=this.value==='scheduled'?'block':'none'">
+        <option value="draft">📝 Черновик</option><option value="scheduled">⏳ Запланировать</option><option value="published">📤 Опубликовать</option>
       </select>
     </div>
-    <div class="fg"><label class="fl">Дата</label><input class="fi" type="datetime-local" id="ep-dt"></div>
+    <div class="fg" id="post-sw" style="display:none"><label class="fl">Дата/время</label><input class="fi" type="datetime-local" id="post-sched"></div>
   </div>
+  <div class="fa"><button class="btn bp" onclick="savePost()">💾 Сохранить</button><button class="btn bg" onclick="cls('ov-post')">Отмена</button></div>
+</div></div>
+
+<!-- AD SHEET -->
+<div id="ov-ad" class="ov" style="display:none" onclick="if(event.target===this)cls('ov-ad')">
+<div class="sh-box">
+  <div class="sh-handle"></div>
+  <div class="sh-title">Рекламная кампания <button class="sh-close" onclick="cls('ov-ad')">✕</button></div>
+  <input type="hidden" id="ad-eid">
+  <div class="fg">
+    <label class="fl">Постер</label>
+    <div class="pgen" onclick="openPosterGen('ad-purl')"><div class="pgen-ic">🖼</div><div class="pgen-tx">AI-генерация постера</div></div>
+    <input class="fi" id="ad-purl" placeholder="URL изображения" style="margin-top:6px" oninput="previewUrl(this,'ad-prev')">
+    <div id="ad-prev" style="display:none;margin-top:8px"><img id="ad-prev-img" style="width:100%;border-radius:10px" src=""></div>
+  </div>
+  <div class="fg">
+    <label class="fl">Рекламный текст</label>
+    <textarea class="fta" id="ad-text" placeholder="Текст рекламы..." oninput="aiSug(this,'ais-ad','aisa-text')"></textarea>
+    <div class="ais" id="ais-ad"><div class="ail">🤖 Вариант AI</div><div id="aisa-text" style="white-space:pre-line"></div><button class="aiu" onclick="useAi('ad-text','ais-ad','aisa-text')">Использовать</button></div>
+  </div>
+  <div class="fr2">
+    <div class="fg"><label class="fl">Рекламодатель</label><input class="fi" id="ad-client" placeholder="Компания / ИП"></div>
+    <div class="fg"><label class="fl">Контакт</label><input class="fi" id="ad-contact" placeholder="@username"></div>
+  </div>
+  <div class="fr2">
+    <div class="fg"><label class="fl">Цена</label><input class="fi" id="ad-price" type="number" placeholder="1000"></div>
+    <div class="fg"><label class="fl">Валюта</label><select class="fs" id="ad-cur"><option>UAH</option><option>USD</option><option>EUR</option><option>RUB</option></select></div>
+  </div>
+  <div class="fr2">
+    <div class="fg"><label class="fl">Публикация</label><input class="fi" type="datetime-local" id="ad-pub"></div>
+    <div class="fg"><label class="fl">Авто-удалить</label><select class="fs" id="ad-del"><option value="0">Не удалять</option><option value="1">1 час</option><option value="6">6 часов</option><option value="24">24 часа</option><option value="72">3 дня</option></select></div>
+  </div>
+  <div class="fa"><button class="btn bp" onclick="saveAd()">💾 Сохранить</button><button class="btn bg" onclick="cls('ov-ad')">Отмена</button></div>
+</div></div>
+
+<!-- HERO SHEET -->
+<div id="ov-hero" class="ov" style="display:none" onclick="if(event.target===this)cls('ov-hero')">
+<div class="sh-box">
+  <div class="sh-handle"></div>
+  <div class="sh-title">Карточка персонажа <button class="sh-close" onclick="cls('ov-hero')">✕</button></div>
+  <input type="hidden" id="hero-eid">
+  <div class="fg">
+    <label class="fl">Постер / Фото</label>
+    <div class="pgen" onclick="openPosterGen('hero-purl')"><div class="pgen-ic">🌟</div><div class="pgen-tx">AI-генерация постера</div></div>
+    <input class="fi" id="hero-purl" placeholder="URL изображения" style="margin-top:6px" oninput="previewUrl(this,'hero-prev')">
+    <div id="hero-prev" style="display:none;margin-top:8px"><img id="hero-prev-img" style="width:100%;border-radius:10px" src=""></div>
+  </div>
+  <div class="fg"><label class="fl">Заголовок / Слоган</label><input class="fi" id="hero-title" placeholder="Добро пожаловать!"></div>
+  <div class="fg">
+    <label class="fl">Текст</label>
+    <textarea class="fta" id="hero-text" placeholder="Текст который видит пользователь..." oninput="aiSug(this,'ais-hero','aish-text')"></textarea>
+    <div class="ais" id="ais-hero"><div class="ail">🤖 Вариант AI</div><div id="aish-text" style="white-space:pre-line"></div><button class="aiu" onclick="useAi('hero-text','ais-hero','aish-text')">Использовать</button></div>
+  </div>
+  <div class="fg"><label class="fl">Emoji</label><input class="fi" id="hero-emoji" placeholder="🔥" maxlength="4" style="width:80px"></div>
+  <div class="fa"><button class="btn bp" onclick="saveHero()">💾 Сохранить</button><button class="btn bg" onclick="cls('ov-hero')">Отмена</button></div>
+</div></div>
+
+<!-- POSTER GEN SHEET -->
+<div id="ov-pgen" class="ov" style="display:none" onclick="if(event.target===this)cls('ov-pgen')">
+<div class="sh-box">
+  <div class="sh-handle"></div>
+  <div class="sh-title">🎨 AI-постер <button class="sh-close" onclick="cls('ov-pgen')">✕</button></div>
+  <div class="fg"><label class="fl">Опиши постер</label><textarea class="fta" id="pgen-prompt" placeholder="Яркий постер с текстом 'Новый урок', фиолетовый градиент, современный стиль..."></textarea></div>
   <div class="fa">
-    <button class="btn bp" onclick="updatePost()">💾 Обновить</button>
-    <button class="btn bg" onclick="cm('m-edit-post')">Отмена</button>
+    <button class="btn bp" onclick="runPosterGen()" id="pgen-btn">🎨 Сгенерировать</button>
+    <button class="btn bg" onclick="cls('ov-pgen')">Отмена</button>
   </div>
+  <div style="font-size:9px;color:var(--muted2);margin-top:12px;text-align:center;line-height:1.5">AI-генерация работает через backend с Stable Diffusion / DALL·E.<br>В демо: вставь URL изображения вручную.</div>
 </div></div>
 
-<!-- Category -->
-<div id="m-cat" class="mo" style="display:none" onclick="if(event.target===this)cm('m-cat')">
-<div class="mb">
-  <div class="mt">Новая категория <button class="mc" onclick="cm('m-cat')">✕</button></div>
-  <div class="fg"><label class="fl">Название RU</label><input class="fi" id="cat-ru" placeholder="Новости"></div>
-  <div class="fg"><label class="fl">Название UK</label><input class="fi" id="cat-uk" placeholder="Новини"></div>
-  <div class="fg"><label class="fl">Иконка</label><input class="fi" id="cat-ic" placeholder="📰" maxlength="4" style="width:80px"></div>
-  <div class="fa"><button class="btn bp" onclick="createCat()">💾 Создать</button><button class="btn bg" onclick="cm('m-cat')">Отмена</button></div>
-</div></div>
-
-<!-- Ad Campaign -->
-<div id="m-ad" class="mo" style="display:none" onclick="if(event.target===this)cm('m-ad')">
-<div class="mb">
-  <div class="mt">Новая кампания <button class="mc" onclick="cm('m-ad')">✕</button></div>
-  <div class="fg"><label class="fl">Текст рекламы</label><textarea class="fta" id="ad-tx" placeholder="Рекламный текст..."></textarea></div>
-  <div class="fr2">
-    <div class="fg"><label class="fl">Рекламодатель</label><input class="fi" id="ad-adv" placeholder="Компания"></div>
-    <div class="fg"><label class="fl">Бюджет (UAH)</label><input class="fi" id="ad-bud" type="number" placeholder="1000"></div>
-  </div>
-  <div class="fr2">
-    <div class="fg"><label class="fl">Дата публикации</label><input class="fi" type="datetime-local" id="ad-pub"></div>
-    <div class="fg"><label class="fl">Удалить через</label>
-      <select class="fs" id="ad-del"><option value="0">Не удалять</option><option value="1">1 час</option><option value="6">6 часов</option><option value="24">24 часа</option><option value="72">3 дня</option></select>
-    </div>
-  </div>
-  <div class="fa"><button class="btn bp" onclick="createAd()">💾 Создать</button><button class="btn bg" onclick="cm('m-ad')">Отмена</button></div>
-</div></div>
-
-<!-- Edit Hero -->
-<div id="m-hero" class="mo" style="display:none" onclick="if(event.target===this)cm('m-hero')">
-<div class="mb">
-  <div class="mt">Редактировать персонажа <button class="mc" onclick="cm('m-hero')">✕</button></div>
-  <div class="fg"><label class="fl">Имя</label><input class="fi" id="h-nm"></div>
-  <div class="fg"><label class="fl">Биография RU</label><textarea class="fta" id="h-bru"></textarea></div>
-  <div class="fg"><label class="fl">Биография UK</label><textarea class="fta" id="h-buk"></textarea></div>
-  <div class="fg"><label class="fl">Biography EN</label><textarea class="fta" id="h-ben"></textarea></div>
-  <div class="fg"><label class="fl">Личность / Стиль общения</label><textarea class="fta" id="h-per" placeholder="Характер, манера речи, интересы..."></textarea></div>
-  <div class="fa"><button class="btn bp" onclick="saveHero()">💾 Сохранить</button><button class="btn bg" onclick="cm('m-hero')">Отмена</button></div>
-</div></div>
-
-<!-- Poster -->
-<div id="m-poster" class="mo" style="display:none" onclick="if(event.target===this)cm('m-poster')">
-<div class="mb">
-  <div class="mt">Постер над пультом <button class="mc" onclick="cm('m-poster')">✕</button></div>
-  <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">Каждый вариант — отдельная «открытка». Бот покажет случайную при входе.</div>
-  <div class="fg"><label class="fl">Текст (заголовок)</label><input class="fi" id="ps-tx" placeholder="Добро пожаловать в пульт!"></div>
-  <div class="fg"><label class="fl">Подзаголовок</label><input class="fi" id="ps-sb" placeholder="Создавай. Расти. Зарабатывай."></div>
-  <div class="fg"><label class="fl">Emoji / Иконка</label><input class="fi" id="ps-em" placeholder="🔥" maxlength="4" style="width:80px"></div>
-  <div class="fa"><button class="btn bp" onclick="addPoster()">+ Добавить вариант</button><button class="btn bg" onclick="cm('m-poster')">Закрыть</button></div>
-</div></div>
-
-<!-- Setup -->
-<div id="setupOv" class="setup-ov" style="display:none">
-<div class="setup-box">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;background:linear-gradient(135deg,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">OMNI-CONTROL</div>
-  <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:20px">ПОДКЛЮЧЕНИЕ К API</div>
+<!-- SETUP -->
+<div id="sov" class="sov" style="display:none">
+<div class="sbox">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;background:linear-gradient(135deg,var(--accent2),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">OMNI-CONTROL</div>
+  <div style="font-size:9px;color:var(--muted2);letter-spacing:1.5px;margin-bottom:20px">ПОДКЛЮЧЕНИЕ К API</div>
   <div class="fg"><label class="fl">IP сервера</label><input class="fi" id="su" placeholder="http://123.45.67.89"></div>
-  <div class="fg"><label class="fl">API Secret Key</label><input class="fi" id="sk" placeholder="из .env файла" type="password"></div>
-  <button class="btn bp" style="width:100%;margin-bottom:10px" onclick="saveConfig()">🔌 ПОДКЛЮЧИТЬ</button>
-  <button class="btn bg" style="width:100%;font-size:10px" onclick="demoMode()">👁 ДЕМО — работать без API</button>
-  <div id="se" style="color:var(--red);font-size:11px;margin-top:10px;text-align:center;display:none"></div>
-</div>
-</div>
+  <div class="fg"><label class="fl">API Secret Key</label><input class="fi" id="sk" type="password" placeholder="из .env файла"></div>
+  <button class="btn bp bfw" style="margin-bottom:10px" onclick="saveConfig()">🔌 Подключить</button>
+  <button class="btn bg bfw" style="font-size:9px" onclick="g('sov').style.display='none'">👁 Демо-режим</button>
+  <div id="se" style="color:var(--red);font-size:10px;margin-top:10px;text-align:center;display:none"></div>
+</div></div>
 
+<div class="toast-el" id="toastEl"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// ════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════
-let DEMO = false;
-const CFG = {
-  get url(){ return localStorage.getItem('omni_url')||''; },
-  get key(){ return localStorage.getItem('omni_key')||''; },
-};
-
-const MOCK = {
-  stats:{posts:24,ads:3,team:6,requests:2},
-  posts:[
-    {id:1,text_ru:"Новый пост о маркетинге и трендах 2026",status:"published",created_at:"26.02.2026"},
-    {id:2,text_ru:"Анонс нового продукта для аудитории",status:"draft",created_at:"25.02.2026"},
-    {id:3,text_ru:"Тренды SMM 2026 — что работает сейчас",status:"scheduled",created_at:"27.02.2026"},
-    {id:4,text_ru:"Кейс роста аудитории с нуля до 50к",status:"published",created_at:"24.02.2026"},
-    {id:5,text_ru:"7 ошибок начинающего контент-мейкера",status:"draft",created_at:"23.02.2026"},
-  ],
-  cats:[{id:1,name_ru:"Новости",icon:"📰"},{id:2,name_ru:"Маркетинг",icon:"📈"},{id:3,name_ru:"Кейсы",icon:"💡"}],
-  ads:[
-    {id:1,text:"Реклама продукта X — узнай больше",advertiser:"ООО Рога и Копыта",status:"active",ctr:"4.2%",budget:"500 UAH"},
-    {id:2,text:"Промо акция февраль — скидки до 50%",advertiser:"ИП Примаков",status:"pending",ctr:"—",budget:"1200 UAH"},
-    {id:3,text:"Партнёрский пост — спонсор выпуска",advertiser:"ЧП Старт",status:"cancelled",ctr:"1.8%",budget:"300 UAH"},
-  ],
-  team:[
-    {id:103920773,name:"Goulash1986",role:"owner",date:"01.01.2026"},
-    {id:2,name:"Андрей А.",role:"admin",date:"10.01.2026"},
-    {id:3,name:"Мария К.",role:"editor",date:"15.02.2026"},
-  ],
-  requests:[
-    {id:1,name:"Иван П.",msg:"Хочу помогать с контентом"},
-    {id:2,name:"Анна С.",msg:"SMM-специалист, 3 года опыта"},
-  ],
-  hero:{exists:true,name:"АЛИНЫЧ АНДРЕЕВИЧ",bio:"Эксперт в digital-маркетинге и SMM.",bio_ru:"Эксперт в digital-маркетинге и SMM.",bio_uk:"Експерт з digital-маркетингу та SMM.",bio_en:"Digital marketing & SMM expert.",personality:"Энергичный, говорит на ты. Любит конкретику и юмор. Не терпит воды в текстах."},
-  roi:{impressions:12400,clicks:520,ctr:4.2},
-  activity:[
-    {icon:"📤",text:"Пост #4 опубликован в канал",time:"сегодня 14:22"},
-    {icon:"✅",text:"Заявка Ивана П. одобрена",time:"сегодня 12:10"},
-    {icon:"💼",text:"Реклама #1 активирована",time:"вчера 18:45"},
-    {icon:"🚨",text:"PANIC MODE активирован",time:"23.02 09:15"},
-  ],
-  logs:[
-    {action:"publish_post",author:"Goulash1986",entity:"Пост #4",time:"26.02 14:22"},
-    {action:"ban_user",author:"Goulash1986",entity:"User #99",time:"26.02 12:10"},
-    {action:"change_role",author:"Goulash1986",entity:"Мария К. → Editor",time:"25.02 18:45"},
-    {action:"approve_join_request",author:"Goulash1986",entity:"Иван П.",time:"25.02 11:30"},
-    {action:"panic_mode",author:"Goulash1986",entity:"Система",time:"23.02 09:15"},
-  ],
-  posters:[
-    {emoji:"🔥",title:"Добро пожаловать!",sub:"Создавай контент. Расти. Зарабатывай."},
-    {emoji:"💡",title:"Пульт управления",sub:"Всё под контролем. Ты — Алиныч Андреевич."},
-  ]
-};
-
-// ════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  // Auto-start demo if no API configured
-  if (!CFG.url || !CFG.key) {
-    DEMO = true;
-    loadAll();
-  } else {
-    loadAll();
-  }
-});
-
-function loadAll() {
-  loadDashboard();
-  loadContent();
-  loadCats();
-}
-
-// ════════════════════════════════════════
-// NAV
-// ════════════════════════════════════════
-function gp(id, btn) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  btn.classList.add('active');
-  const map={content:()=>{loadContent();loadCats();},ads:loadAds,finance:loadFinance,team:loadTeam,hero:loadHero,inbox:loadInbox,analytics:loadAnalytics,logs:()=>loadLogs('all')};
-  if(map[id]) map[id]();
-}
-
-// ════════════════════════════════════════
-// API FETCH
-// ════════════════════════════════════════
-async function apiFetch(path, method='GET', body=null) {
-  const opts = {method, headers:{'X-Api-Key':CFG.key,'Content-Type':'application/json'}};
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(CFG.url+path, opts);
-  if (!r.ok) throw new Error('API '+r.status);
-  return r.json();
-}
-
-// ════════════════════════════════════════
-// DASHBOARD
-// ════════════════════════════════════════
-async function loadDashboard() {
-  let d;
-  if (DEMO) {
-    d = {stats:MOCK.stats, posts_by_day:[{date:'21',count:2},{date:'22',count:1},{date:'23',count:3},{date:'24',count:2},{date:'25',count:4},{date:'26',count:1}], post_statuses:{published:14,drafts:7,scheduled:3}, roi:MOCK.roi, activity:MOCK.activity};
-  } else { try{d=await apiFetch('/api/dashboard');}catch(e){return;} }
-
-  cnt('s-p',d.stats.posts); cnt('s-a',d.stats.ads); cnt('s-t',d.stats.team); cnt('s-r',d.stats.requests);
-  document.getElementById('rBdg').textContent = d.stats.requests;
-
-  g('feed').innerHTML = d.activity.map(a=>
-    `<div class="feed-item"><div class="feed-ic">${a.icon}</div><div><div style="font-size:12px">${a.text}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${a.time}</div></div></div>`
-  ).join('');
-
-  const roi=d.roi;
-  setTimeout(()=>{bw('bI',100);bw('bC',roi.impressions?roi.clicks/roi.impressions*100:0);bw('bT',roi.ctr/10*100);},100);
-  g('vI').textContent=(roi.impressions||0).toLocaleString();
-  g('vC').textContent=(roi.clicks||0).toLocaleString();
-  g('vT').textContent=roi.ctr+'%';
-
-  drawBar('cPosts', d.posts_by_day.map(x=>x.date), d.posts_by_day.map(x=>x.count));
-  const s=d.post_statuses;
-  drawDonut('cStatus',['Опубликовано','Черновики','Запланировано'],[s.published,s.drafts,s.scheduled]);
-}
-
-function drawBar(id,labels,data){
-  const ctx=g(id)?.getContext('2d'); if(!ctx)return;
-  if(window['_c'+id])window['_c'+id].destroy();
-  window['_c'+id]=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:'rgba(124,58,237,.5)',borderColor:'rgba(168,85,247,.8)',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(42,42,58,.5)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(42,42,58,.5)'},ticks:{color:'#64748b',font:{size:10},stepSize:1}}}}});
-}
-function drawDonut(id,labels,data){
-  const ctx=g(id)?.getContext('2d'); if(!ctx)return;
-  if(window['_c'+id])window['_c'+id].destroy();
-  window['_c'+id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:['rgba(16,185,129,.7)','rgba(100,116,139,.5)','rgba(245,158,11,.7)'],borderColor:['#10b981','#475569','#f59e0b'],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#64748b',font:{size:10},padding:10}}},cutout:'65%'}});
-}
-
-// ════════════════════════════════════════
-// CONTENT
-// ════════════════════════════════════════
-let _cf='all';
-
-async function loadContent() {
-  let posts;
-  if(DEMO){posts=MOCK.posts;}
-  else{try{const d=await apiFetch(`/api/posts?status=${_cf}`);posts=d.posts;}catch(e){return;}}
-
-  const fl=_cf==='all'?posts:posts.filter(p=>p.status===_cf);
-  const sc={published:'st-pub',draft:'st-drf',scheduled:'st-sch',deleted:'st-del'};
-  const st={published:'Опубликован',draft:'Черновик',scheduled:'Запланирован',deleted:'Удалён'};
-  g('conTbl').innerHTML=fl.length?fl.map(p=>`
-    <tr>
-      <td><div style="font-size:12px;font-weight:600">#${p.id}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${(p.text_ru||p.text||'').substring(0,60)}</div></td>
-      <td><span class="st ${sc[p.status]||'st-drf'}">${st[p.status]||p.status}</span></td>
-      <td style="font-size:11px;color:var(--muted)">${p.created_at}</td>
-      <td><div style="display:flex;gap:6px">
-        <button class="btn bg bsm" onclick="editPost(${p.id})">✏️</button>
-        <button class="btn bd bsm" onclick="delPost(${p.id})">🗑</button>
-      </div></td>
-    </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Нет постов</td></tr>';
-}
-
-async function loadCats() {
-  let cats;
-  if(DEMO){cats=MOCK.cats;}
-  else{try{const d=await apiFetch('/api/categories');cats=d.categories;}catch(e){cats=[];}}
-  g('catList').innerHTML=cats.length?cats.map(c=>
-    `<div style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px">${c.icon||'📁'} ${c.name_ru} <button onclick="delCat(${c.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;margin-left:4px">✕</button></div>`
-  ).join(''):'<span style="font-size:11px;color:var(--muted)">Нет категорий</span>';
-  const sel=g('pt-cat');
-  if(sel) sel.innerHTML='<option value="">— Без категории</option>'+cats.map(c=>`<option value="${c.id}">${c.icon||''} ${c.name_ru}</option>`).join('');
-}
-
-function fCon(f,btn){
-  _cf=f;
-  document.querySelectorAll('#page-content .tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  loadContent();
-}
-
-async function createPost(){
-  const data={text_ru:g('pt-ru').value,text_uk:g('pt-uk').value,category_id:g('pt-cat').value||null,status:g('pt-st').value,schedule_at:g('pt-dt').value||null};
-  if(!data.text_ru&&!data.text_uk){alert('Введите текст');return;}
-  if(DEMO){MOCK.posts.unshift({id:Date.now(),text_ru:data.text_ru||data.text_uk,status:data.status,created_at:new Date().toLocaleDateString('ru')});}
-  else{try{await apiFetch('/api/posts','POST',data);}catch(e){alert('Ошибка: '+e.message);return;}}
-  cm('m-post'); g('pt-ru').value=''; g('pt-uk').value=''; loadContent();
-}
-
-function editPost(id){
-  const p=MOCK.posts.find(x=>x.id===id)||{id,text_ru:'',text_uk:'',status:'draft'};
-  g('ep-id').value=id; g('ep-ru').value=p.text_ru||''; g('ep-uk').value=p.text_uk||''; g('ep-st').value=p.status||'draft';
-  om('m-edit-post');
-}
-
-async function updatePost(){
-  const id=parseInt(g('ep-id').value);
-  const data={text_ru:g('ep-ru').value,text_uk:g('ep-uk').value,status:g('ep-st').value,schedule_at:g('ep-dt').value||null};
-  if(DEMO){const p=MOCK.posts.find(x=>x.id===id);if(p){p.text_ru=data.text_ru;p.status=data.status;}}
-  else{try{await apiFetch('/api/posts/'+id,'PUT',data);}catch(e){alert('Ошибка');return;}}
-  cm('m-edit-post'); loadContent();
-}
-
-async function delPost(id){
-  if(!confirm('Удалить пост #'+id+'?'))return;
-  if(DEMO){MOCK.posts=MOCK.posts.filter(p=>p.id!==id);}
-  else{try{await apiFetch('/api/posts/'+id,'DELETE');}catch(e){alert('Ошибка');return;}}
-  loadContent();
-}
-
-async function createCat(){
-  const data={name_ru:g('cat-ru').value,name_uk:g('cat-uk').value,icon:g('cat-ic').value};
-  if(!data.name_ru){alert('Введите название');return;}
-  if(DEMO){MOCK.cats.push({id:Date.now(),name_ru:data.name_ru,icon:data.icon});}
-  else{try{await apiFetch('/api/categories','POST',data);}catch(e){alert('Ошибка');return;}}
-  cm('m-cat'); g('cat-ru').value=''; g('cat-uk').value=''; g('cat-ic').value=''; loadCats();
-}
-
-async function delCat(id){
-  if(DEMO){MOCK.cats=MOCK.cats.filter(c=>c.id!==id);loadCats();return;}
-  try{await apiFetch('/api/categories/'+id,'DELETE');loadCats();}catch(e){alert('Ошибка');}
-}
-
-// ════════════════════════════════════════
-// ADS
-// ════════════════════════════════════════
-async function loadAds(){
-  let d;
-  if(DEMO){d={stats:{active:1,pending:1,budget:'2000',ctr:'4.2%'},ads:MOCK.ads};}
-  else{try{d=await apiFetch('/api/ads');}catch(e){return;}}
-  g('aAct').textContent=d.stats.active; g('aPen').textContent=d.stats.pending;
-  g('aBud').textContent=d.stats.budget||'—'; g('aCtr').textContent=d.stats.ctr;
-  const sc={active:'st-act',pending:'st-pen',cancelled:'st-can',completed:'st-pub'};
-  const st={active:'Активна',pending:'Ожидает',cancelled:'Отменена',completed:'Завершена'};
-  g('adsTbl').innerHTML=d.ads.map(a=>`
-    <tr>
-      <td><div style="font-size:11px;font-weight:600">#${a.id}</div><div style="font-size:11px;color:var(--muted)">${a.text.substring(0,45)}</div></td>
-      <td style="font-size:11px;color:var(--muted)">${a.advertiser||'—'}</td>
-      <td><span class="st ${sc[a.status]||'st-drf'}">${st[a.status]||a.status}</span></td>
-      <td style="font-size:12px">${a.ctr}</td>
-      <td style="font-size:11px;color:var(--muted)">${a.budget}</td>
-      <td><div style="display:flex;gap:5px">
-        ${a.status==='pending'?`<button class="btn bsuc bsm" onclick="activateAd(${a.id})">▶</button>`:''}
-        <button class="btn bd bsm" onclick="delAd(${a.id})">🗑</button>
-      </div></td>
-    </tr>`).join('');
-}
-
-async function createAd(){
-  const data={text:g('ad-tx').value,advertiser:g('ad-adv').value,budget:g('ad-bud').value,publish_at:g('ad-pub').value,delete_after:g('ad-del').value};
-  if(!data.text){alert('Введите текст');return;}
-  if(DEMO){MOCK.ads.unshift({id:Date.now(),text:data.text,advertiser:data.advertiser,status:'pending',ctr:'—',budget:(data.budget||'0')+' UAH'});}
-  else{try{await apiFetch('/api/ads','POST',data);}catch(e){alert('Ошибка');return;}}
-  cm('m-ad'); g('ad-tx').value=''; loadAds();
-}
-
-async function activateAd(id){
-  if(DEMO){const a=MOCK.ads.find(x=>x.id===id);if(a)a.status='active';}
-  else{try{await apiFetch('/api/ads/'+id+'/activate','POST');}catch(e){alert('Ошибка');return;}}
-  loadAds();
-}
-
-async function delAd(id){
-  if(!confirm('Удалить кампанию #'+id+'?'))return;
-  if(DEMO){MOCK.ads=MOCK.ads.filter(a=>a.id!==id);}
-  else{try{await apiFetch('/api/ads/'+id,'DELETE');}catch(e){alert('Ошибка');return;}}
-  loadAds();
-}
-
-// ════════════════════════════════════════
-// FINANCE
-// ════════════════════════════════════════
-async function loadFinance(){
-  let d;
-  if(DEMO){
-    const adv=[{name:'ООО Рога и Копыта',budget:500,campaigns:1},{name:'ИП Примаков',budget:1200,campaigns:1},{name:'ЧП Старт',budget:300,campaigns:1}];
-    d={income:2000,expense:200,profit:1800,campaigns:3,total_budget:2000,avg_budget:667,done_campaigns:1,advertisers:adv};
-  } else{try{d=await apiFetch('/api/finance');}catch(e){return;}}
-  cnt('fInc',d.income||0); cnt('fExp',d.expense||0); cnt('fPro',d.profit||0); cnt('fCam',d.campaigns||0);
-  g('fTot').textContent=(d.total_budget||0)+' UAH';
-  g('fAvg').textContent=Math.round(d.avg_budget||0)+' UAH';
-  g('fAct2').textContent=d.campaigns||0;
-  g('fDone').textContent=d.done_campaigns||0;
-  g('finTbl').innerHTML=(d.advertisers||[]).length?`<table class="tbl"><thead><tr><th>Рекламодатель</th><th>Бюджет</th><th>Кампаний</th></tr></thead><tbody>${(d.advertisers||[]).map(a=>`<tr><td style="font-size:12px">${a.name}</td><td style="color:var(--green);font-size:12px">${a.budget} UAH</td><td>${a.campaigns}</td></tr>`).join('')}</tbody></table>`:'<div style="color:var(--muted);font-size:12px">Нет данных</div>';
-}
-
-// ════════════════════════════════════════
-// TEAM
-// ════════════════════════════════════════
-async function loadTeam(){
-  let d;
-  if(DEMO){d={members:MOCK.team,requests:MOCK.requests};}
-  else{try{d=await apiFetch('/api/team');}catch(e){return;}}
-  if(d.requests?.length){
-    g('reqBlk').style.display='block';
-    g('reqLst').innerHTML=d.requests.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:12px;font-weight:600">${r.name}</div><div style="font-size:11px;color:var(--muted)">${r.msg}</div></div><div style="font-size:10px;color:var(--muted)">Одобрить в боте →</div></div>`).join('');
-  } else g('reqBlk').style.display='none';
-  const rc={owner:'rl-o',admin:'rl-a',editor:'rl-e'};
-  const rt={owner:'Owner',admin:'Admin',editor:'Editor',analyst:'Analyst'};
-  g('teamTbl').innerHTML=d.members.map(u=>`<tr>
-  <td><div style="display:flex;align-items:center;gap:10px"><div class="av">${(u.name||'?')[0]}</div><div style="font-size:12px">${u.name}</div></div></td>
-  <td><span class="rl ${rc[u.role]||''}">${rt[u.role]||u.role}</span></td>
-  <td style="font-size:11px;color:var(--muted)"><code>${u.id}</code></td>
-  <td style="font-size:11px;color:var(--muted)">${u.date}</td>
-  <td><div style="display:flex;gap:5px">
-    ${u.role!=='owner'?`<button class="btn bg bsm" onclick="changeRole(${u.id},'${u.role}')" title="Сменить роль">🔄</button>`:''}
-    ${u.role!=='owner'?`<button class="btn bd bsm" onclick="banUser(${u.id},'${u.name}')" title="Забанить">🚫</button>`:''}
-  </div></td>
-</tr>`).join('');
-}
-
-// ════════════════════════════════════════
-// HERO
-// ════════════════════════════════════════
-async function loadHero(){
-  let h;
-  if(DEMO){h=MOCK.hero;}
-  else{try{h=await apiFetch('/api/hero');}catch(e){return;}}
-  if(!h.exists){g('hName').textContent='Персонаж не создан';g('hBio').textContent='Создайте в боте';return;}
-  g('hName').textContent=h.name; g('hBio').textContent=h.bio;
-  g('hBioRu').textContent=h.bio_ru; g('hBioUk').textContent=h.bio_uk; g('hBioEn').textContent=h.bio_en;
-  g('hPers').textContent=h.personality||'—';
-  renderPosters();
-}
-
-function openEditHero(){
-  const h=MOCK.hero;
-  g('h-nm').value=h.name||''; g('h-bru').value=h.bio_ru||''; g('h-buk').value=h.bio_uk||'';
-  g('h-ben').value=h.bio_en||''; g('h-per').value=h.personality||'';
-  om('m-hero');
-}
-
-async function saveHero(){
-  const data={name:g('h-nm').value,bio_ru:g('h-bru').value,bio_uk:g('h-buk').value,bio_en:g('h-ben').value,personality:g('h-per').value};
-  if(DEMO){Object.assign(MOCK.hero,data);MOCK.hero.bio=data.bio_ru;}
-  else{try{await apiFetch('/api/hero','PUT',data);}catch(e){alert('Ошибка: '+e.message);return;}}
-  cm('m-hero'); loadHero();
-}
-
-function renderPosters(){
-  const p=MOCK.posters;
-  g('posterList').innerHTML=p.length?p.map((x,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
-      <span style="font-size:26px">${x.emoji}</span>
-      <div style="flex:1"><div style="font-size:12px;font-weight:600">${x.title}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${x.sub}</div></div>
-      <button onclick="delPoster(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button>
-    </div>`).join(''):'<div style="color:var(--muted);font-size:11px">Нет вариантов. Добавь первый!</div>';
-}
-
-function addPoster(){
-  const text=g('ps-tx').value, sub=g('ps-sb').value, emoji=g('ps-em').value||'🔥';
-  if(!text){alert('Введите текст');return;}
-  MOCK.posters.push({emoji,title:text,sub:sub});
-  g('ps-tx').value=''; g('ps-sb').value=''; g('ps-em').value='';
-  renderPosters();
-}
-
-function delPoster(i){MOCK.posters.splice(i,1);renderPosters();}
-
-// ════════════════════════════════════════
-// LOGS
-// ════════════════════════════════════════
-async function loadLogs(f){
-  let logs;
-  if(DEMO){logs=MOCK.logs;}
-  else{try{const d=await apiFetch(`/api/logs?filter=${f}`);logs=d.logs;}catch(e){return;}}
-  const al={publish_post:"📤 Публикация",ban_user:"🚫 Бан",unban_user:"✅ Разбан",change_role:"🔄 Смена роли",approve_join_request:"✅ Заявка одобрена",reject_join_request:"❌ Заявка отклонена",panic_mode:"🚨 Panic Mode",delete_post:"🗑 Удаление"};
-  g('logsTbl').innerHTML=logs.length?logs.map(l=>`<tr><td style="font-size:12px">${al[l.action]||l.action}</td><td style="font-size:11px;color:var(--muted)">${l.author||'—'}</td><td style="font-size:11px;color:var(--muted)">${l.entity||'—'}</td><td style="font-size:11px;color:var(--muted)">${l.time}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Нет логов</td></tr>';
-}
-
-function fLog(f,btn){
-  document.querySelectorAll('#page-logs .tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); loadLogs(f);
-}
-
-// ════════════════════════════════════════
-// BOT SETTINGS
-// ════════════════════════════════════════
-function saveBotSettings(){
-  alert('✅ Настройки сохранены!\nПерезапусти бот через start.bat чтобы применить изменения.');
-}
-function confirmRestart(){
-  if(confirm('Перезапустить бота?')) alert('Команда отправлена боту. Перезапусти start.bat вручную.');
-}
-
-// ════════════════════════════════════════
-// MODAL
-// ════════════════════════════════════════
-function om(id){document.getElementById(id).style.display='flex';}
-function cm(id){document.getElementById(id).style.display='none';}
-
-// ════════════════════════════════════════
-// SETUP
-// ════════════════════════════════════════
-function showSetup(){
-  const o=g('setupOv'); o.style.display='flex';
-  g('su').value=CFG.url; g('sk').value=CFG.key;
-}
-
-async function saveConfig(){
-  const url=g('su').value.trim().replace(/\/$/,''), key=g('sk').value.trim();
-  if(!url||!key)return;
-  try{
-    const r=await fetch(url+'/',{headers:{'X-Api-Key':key}});
-    if(!r.ok) throw new Error('Неверный ключ или IP недоступен');
-    localStorage.setItem('omni_url',url); localStorage.setItem('omni_key',key);
-    DEMO=false; g('setupOv').style.display='none'; loadAll();
-  }catch(e){g('se').style.display='block';g('se').textContent='❌ '+e.message;}
-}
-
-function demoMode(){DEMO=true; g('setupOv').style.display='none'; loadAll();}
-
-// ════════════════════════════════════════
-// UTILS
-// ════════════════════════════════════════
-function g(id){return document.getElementById(id);}
-function bw(id,pct){g(id).style.width=Math.min(100,Math.max(0,pct))+'%';}
-function cnt(id,target){
-  const e=g(id); if(!e)return; let c=0;
-  const s=Math.ceil(target/20)||1;
-  const t=setInterval(()=>{c=Math.min(c+s,target);e.textContent=c;if(c>=target)clearInterval(t);},50);
-}
-
-
-// ════════════════════════════════════════
-// PANIC MODE
-// ════════════════════════════════════════
-function activatePanic(){
-  if(!confirm('⚠️ PANIC MODE\n\nЭто немедленно:\n• Остановит все запланированные посты\n• Уведомит всю команду\n\nПродолжить?')) return;
-  if(DEMO){
-    alert('🚨 PANIC MODE активирован!\n\nОтменено запланированных постов: '+MOCK.posts.filter(p=>p.status==='scheduled').length+'\nКоманда уведомлена.');
-    MOCK.posts.forEach(p=>{if(p.status==='scheduled')p.status='draft';});
-    MOCK.logs.unshift({action:'panic_mode',author:'Вы',entity:'Система',time:'только что'});
-    loadContent(); loadLogs('all');
-  } else {
-    apiFetch('/api/panic','POST').then(()=>alert('🚨 Panic Mode активирован!')).catch(e=>alert('Ошибка: '+e.message));
-  }
-}
-
-// ════════════════════════════════════════
-// AI POST GENERATION
-// ════════════════════════════════════════
-async function aiGenPost(){
-  const topic = prompt('Тема поста (оставь пустым для авто):') ?? '';
-  const ta = g('pt-ru');
-  ta.value = '⏳ Генерирую...';
-  ta.disabled = true;
-  if(DEMO){
-    await new Promise(r=>setTimeout(r,1200));
-    const demos = [
-      '🔥 Топ-5 трендов SMM которые взорвут 2026 год\n\nМаркетинг меняется быстрее чем когда-либо. Вот что реально работает прямо сейчас:\n\n1️⃣ Короткий видео-контент\n2️⃣ AI-персонализация\n3️⃣ Нативная реклама\n4️⃣ UGC контент\n5️⃣ Community building\n\nСохрани и перешли — пригодится 👇',
-      '💡 Как увеличить охваты в 3 раза за месяц\n\nРаботает без бюджета. Проверено на собственном канале.\n\n✅ Публикуй в одно время каждый день\n✅ Используй 3-5 тематических хэштегов\n✅ Отвечай на комментарии в первые 30 минут\n\nПробовал? Пиши результат в комментарии 👇',
-      '📈 Кейс: с 0 до 10к подписчиков за 60 дней\n\nРасскажу как это было. Без накрутки, без рекламы.\n\nГлавный секрет — последовательность и системный подход.\n\nЧитай полный разбор по ссылке ниже 👇'
-    ];
-    ta.value = topic ? `📝 ${topic}\n\n` + demos[0] : demos[Math.floor(Math.random()*demos.length)];
-  } else {
-    try {
-      const d = await apiFetch('/api/ai/generate-post', 'POST', {topic});
-      ta.value = d.text;
-    } catch(e) { ta.value = ''; alert('Ошибка AI: '+e.message); }
-  }
-  ta.disabled = false;
-}
-
-// ════════════════════════════════════════
-// TEAM ACTIONS
-// ════════════════════════════════════════
-function changeRole(userId, currentRole){
-  const roles = ['editor','admin'];
-  const newRole = currentRole === 'admin' ? 'editor' : 'admin';
-  if(!confirm(`Сменить роль на ${newRole.toUpperCase()}?`)) return;
-  if(DEMO){
-    const u = MOCK.team.find(x=>x.id===userId);
-    if(u) { u.role=newRole; MOCK.logs.unshift({action:'change_role',author:'Вы',entity:`${u.name} → ${newRole}`,time:'только что'}); }
-    loadTeam();
-  } else {
-    apiFetch('/api/team/'+userId+'/role','POST',{role:newRole}).then(()=>loadTeam()).catch(e=>alert('Ошибка: '+e.message));
-  }
-}
-
-function banUser(userId, userName){
-  if(!confirm(`Забанить ${userName}?`)) return;
-  if(DEMO){
-    MOCK.team = MOCK.team.filter(u=>u.id!==userId);
-    MOCK.logs.unshift({action:'ban_user',author:'Вы',entity:userName,time:'только что'});
-    loadTeam();
-  } else {
-    apiFetch('/api/team/'+userId+'/ban','POST').then(()=>loadTeam()).catch(e=>alert('Ошибка: '+e.message));
-  }
-}
-
-// ════════════════════════════════════════
-// INBOX
-// ════════════════════════════════════════
-let _inboxFilter = 'all';
-
-const MOCK_INBOX = [
-  {id:1,from:'Иван П.',msg:'Привет! Можно вопрос про ваш курс?',source:'bot',status:'unread',starred:false,time:'сегодня 14:30'},
-  {id:2,from:'Анна С.',msg:'Хочу стать частью команды, готова помочь с контентом',source:'channel',status:'unread',starred:true,time:'сегодня 12:15'},
-  {id:3,from:'Олег Р.',msg:'Когда выйдет новый материал по маркетингу?',source:'bot',status:'read',starred:false,time:'вчера 18:44'},
-  {id:4,from:'Марина К.',msg:'Спасибо за контент! Очень помогает в работе',source:'bot',status:'read',starred:true,time:'вчера 11:20'},
-  {id:5,from:'Дмитрий В.',msg:'Есть ли у вас консультации по SMM?',source:'channel',status:'archived',starred:false,time:'23.02 09:15'},
+const CATS=[{id:1,name:'TikTok',icon:'🎵'},{id:2,name:'Instagram',icon:'📸'},{id:3,name:'Тирс',icon:'🎯'},{id:4,name:'Личная жизнь',icon:'💫'},{id:5,name:'Бизнес',icon:'💼'},{id:6,name:'Мотивация',icon:'🔥'}];
+let POSTS=[
+  {id:1,cat_id:1,poster_url:'',title:'Тренды TikTok 2026',text:'🔥 5 трендов которые взорвут TikTok прямо сейчас!\n\n1️⃣ Дуэты с AI-персонажами\n2️⃣ Скрытые сообщения в субтитрах\n3️⃣ Трёхсекундные хуки\n\nСохрани и используй! 👇',buttons:[{text:'Подробнее',url:'https://t.me/+'}],status:'published',created:'26.02.2026'},
+  {id:2,cat_id:2,poster_url:'',title:'Новый Reels вышел!',text:'✨ Рада видеть вас сегодня!\n\nНовый рилс уже на канале — переходи по кнопке ниже 🎬',buttons:[{text:'Смотреть',url:'https://instagram.com/'}],status:'published',created:'25.02.2026'},
+  {id:3,cat_id:4,poster_url:'',title:'Утренняя рутина',text:'Привет! Сегодня поделюсь своей утренней рутиной 🌅\n\nКоторая помогла мне стать продуктивнее в 3 раза...',buttons:[],status:'draft',created:'24.02.2026'},
+  {id:4,cat_id:1,poster_url:'',title:'Анонс коллаборации',text:'🤝 Скоро будет что-то грандиозное...\n\nПодпишись чтобы не пропустить 🔔',buttons:[{text:'Подписаться',url:'https://t.me/+'}],status:'scheduled',created:'27.02.2026'},
+];
+let ADS=[
+  {id:1,poster_url:'',client:'Beauty Store UA',contact:'@beautystore_ua',text:'💄 Новая коллекция весна 2026!\n\nСкидка 20% по промокоду ALINYCH\n\nТолько до конца недели! 🌸',price:1500,currency:'UAH',status:'active',pub_at:'24.02.2026',del_after:24},
+  {id:2,poster_url:'',client:'FitLife App',contact:'@fitlife_ua',text:'💪 Прокачай тело за 21 день!\n\nFitLife — приложение №1 в Украине\n\nПервые 30 дней бесплатно! 👇',price:800,currency:'UAH',status:'pending',pub_at:'28.02.2026',del_after:48},
+  {id:3,poster_url:'',client:'OnlineSchool Pro',contact:'@onlineschool',text:'📚 Курс по SMM от практиков!\n\nНаучись зарабатывать на контенте\n\nСтарт 1 марта 🚀',price:2000,currency:'UAH',status:'done',pub_at:'20.02.2026',del_after:72},
+];
+let HERO=[
+  {id:1,emoji:'🔥',title:'Добро пожаловать!',text:'Привет! Я Алиныч Андреевич — твой гид по миру контента и трендов 🚀',poster_url:''},
+  {id:2,emoji:'💡',title:'Пульт управления',text:'Здесь всё под контролем. Создавай, публикуй, зарабатывай 💰',poster_url:''},
+  {id:3,emoji:'✨',title:'Новый день — новый контент',text:'Каждый день — возможность создать что-то крутое. Поехали! 🎯',poster_url:''},
+];
+const TEAM=[{id:103920773,name:'Goulash1986',role:'owner',date:'01.01.2026'},{id:2,name:'Андрей А.',role:'admin',date:'10.01.2026'},{id:3,name:'Мария К.',role:'editor',date:'15.02.2026'}];
+const TREQS=[{id:1,name:'Иван П.',msg:'Хочу помогать с контентом'}];
+let INBOX=[
+  {id:1,from:'@beauty_fan',msg:'Привет! Когда будет новый обзор?',src:'ig',status:'unread',starred:false,time:'сегодня 14:30'},
+  {id:2,from:'@hater_99',msg:'МУСОР! ты бесполезная [мат обнаружен]',src:'tt',status:'unread',starred:false,time:'сегодня 12:00',warn:true},
+  {id:3,from:'@dancer_girl',msg:'Очень вдохновляют твои танцы!',src:'tg',status:'unread',starred:true,time:'вчера 18:44'},
+  {id:4,from:'@spam_link',msg:'Переходи по ссылке [ссылка заблокирована]',src:'ig',status:'read',starred:false,time:'вчера 11:20',warn:true},
+  {id:5,from:'@follower_ua',msg:'Когда новый стрим?',src:'tt',status:'read',starred:false,time:'23.02 09:15'},
 ];
 
-async function loadInbox(){
-  let msgs;
-  if(DEMO){ msgs=MOCK_INBOX; }
-  else { try{const d=await apiFetch('/api/inbox');msgs=d.messages;}catch(e){return;} }
-  
-  const unread = msgs.filter(m=>m.status==='unread').length;
-  g('inbBdg').textContent = unread;
-  
-  const filtered = _inboxFilter==='all' ? msgs.filter(m=>m.status!=='deleted') :
-    _inboxFilter==='unread' ? msgs.filter(m=>m.status==='unread') :
-    _inboxFilter==='starred' ? msgs.filter(m=>m.starred) :
-    msgs.filter(m=>m.status==='archived');
-  
-  g('inboxTbl').innerHTML = filtered.length ? filtered.map(m=>`
-    <tr style="${m.status==='unread'?'background:rgba(124,58,237,.04)':''}">
-      <td>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="av" style="width:24px;height:24px;font-size:10px">${(m.from||'?')[0]}</div>
-          <div style="font-size:12px;font-weight:${m.status==='unread'?'700':'400'}">${m.from}${m.status==='unread'?' 🔵':''}</div>
-        </div>
-      </td>
-      <td style="font-size:11px;color:var(--muted)">${m.msg.substring(0,50)}${m.msg.length>50?'...':''}</td>
-      <td style="font-size:10px;color:var(--muted)">${m.source==='channel'?'📢 Канал':'🤖 Бот'}</td>
-      <td style="font-size:10px;color:var(--muted)">${m.time}</td>
-      <td><div style="display:flex;gap:4px">
-        <button class="btn bg bsm" onclick="replyInbox(${m.id},'${m.from.replace(/'/g,"\\'")}')">↩️</button>
-        <button class="btn bg bsm" onclick="starInbox(${m.id})" title="${m.starred?'Убрать':'В важные'}">${m.starred?'⭐':'☆'}</button>
-        <button class="btn bg bsm" onclick="archiveInbox(${m.id})" title="В архив">🗃</button>
-      </div></td>
-    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Нет сообщений</td></tr>';
+let _cc='all',_cs='all',_af='all',_if='all';
+let _pgenTarget=null,_aiT=null;
+const CFG={get url(){return localStorage.getItem('omni_url')||'';},get key(){return localStorage.getItem('omni_key')||'';}};
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const th=localStorage.getItem('omni_theme')||'cyber';
+  document.documentElement.setAttribute('data-theme',th);
+  document.querySelectorAll('.thcard').forEach(c=>c.classList.remove('active'));
+  const tc=g('th-'+th);if(tc)tc.classList.add('active');
+  initAll();
+});
+
+function initAll(){
+  loadDash();loadContent();loadAds();loadHero();loadTeam();loadInbox();loadFinance();
+  populateCats();
 }
 
-function fInbox(f,btn){
-  _inboxFilter=f;
-  document.querySelectorAll('#page-inbox .tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); loadInbox();
+function gp(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  g('page-'+id).classList.add('active');btn.classList.add('active');
 }
 
-function replyInbox(id,fromName){
-  const text = prompt(`Ответить ${fromName}:`);
-  if(!text) return;
-  if(DEMO){ alert('✅ Ответ отправлен: '+text); }
-  else { apiFetch('/api/inbox/'+id+'/reply','POST',{text}).then(()=>alert('✅ Отправлено!')).catch(e=>alert('Ошибка: '+e.message)); }
+// DASHBOARD
+function loadDash(){
+  cnt('sp',POSTS.length);
+  cnt('sa',ADS.filter(a=>a.status==='active').length);
+  cnt('sinc',ADS.filter(a=>a.status!=='pending').reduce((s,a)=>s+a.price,0));
+  cnt('sr',INBOX.filter(m=>m.status==='unread').length);
+  setTimeout(()=>{
+    pw('bI',100);pw('bC',4.2);pw('bT',42);
+    g('vI').textContent='12.4k';g('vC').textContent='520';g('vT').textContent='4.2%';
+  },300);
+  const ctx=g('cDash')?.getContext('2d');
+  if(ctx){if(window._cD)window._cD.destroy();
+  window._cD=new Chart(ctx,{type:'bar',data:{labels:['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],datasets:[{data:[3,1,4,2,5,3,2],backgroundColor:'rgba(124,58,237,.5)',borderColor:'rgba(168,85,247,.8)',borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6060a0',font:{size:9}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#6060a0',font:{size:9},stepSize:1}}}}});}
 }
 
-function starInbox(id){
-  if(DEMO){ const m=MOCK_INBOX.find(x=>x.id===id); if(m)m.starred=!m.starred; loadInbox(); }
-  else { apiFetch('/api/inbox/'+id+'/star','POST').then(()=>loadInbox()); }
+// CONTENT
+function loadContent(){
+  const bar=g('conCatBar');
+  bar.innerHTML='<div class="chip active" onclick="fConCat(\'all\',this)">Все</div>'+CATS.map(c=>`<div class="chip" onclick="fConCat('${c.id}',this)">${c.icon} ${c.name}</div>`).join('');
+  renderCon();
+}
+function fConCat(v,btn){_cc=v;g('conCatBar').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCon();}
+function fConSt(v,btn){_cs=v;g('conStatusBar').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderCon();}
+function renderCon(){
+  let p=POSTS;
+  if(_cc!=='all')p=p.filter(x=>String(x.cat_id)===String(_cc));
+  if(_cs!=='all')p=p.filter(x=>x.status===_cs);
+  const sc={published:'spub',draft:'sdrf',scheduled:'ssch'};
+  const st={published:'📤 Опубликован',draft:'📝 Черновик',scheduled:'⏳ Запланирован'};
+  g('contentCards').innerHTML=p.length?p.map(x=>{
+    const cat=CATS.find(c=>c.id===x.cat_id)||{icon:'📋',name:''};
+    return`<div class="iphcard"><div class="di"></div><span class="cst ${sc[x.status]||'sdrf'}">${st[x.status]||x.status}</span>
+    <div class="cposter">${x.poster_url?`<img src="${x.poster_url}">`:`<div class="cpph"><span style="font-size:38px">${cat.icon}</span><span>${cat.name}</span></div>`}</div>
+    <div class="cbody"><div class="ccat">${cat.icon} ${cat.name}</div><div class="ctitle">${x.title}</div><div class="ctext">${x.text}</div>
+    ${x.buttons?.length?`<div class="cbtns">${x.buttons.map(b=>`<span class="cbtnchip">🔗 ${b.text}</span>`).join('')}</div>`:''}
+    </div><div class="cact"><button class="cab csen" onclick="sendPost(${x.id})">📤 Отправить</button><button class="cab cedt" onclick="editPost(${x.id})">✏️</button><button class="cab cdel" onclick="delPost(${x.id})">🗑</button></div></div>`;
+  }).join('') : '<div style="color:var(--muted2);font-size:11px;padding:20px;text-align:center;grid-column:1/-1">Создай первую карточку!</div>';
+}
+function sendPost(id){const p=POSTS.find(x=>x.id===id);if(p&&confirm(`Опубликовать "${p.title}" в канал?`)){p.status='published';renderCon();toast('📤 Отправлено в канал!');}}
+function editPost(id){
+  const p=POSTS.find(x=>x.id===id);if(!p)return;
+  g('post-eid').value=id;g('post-cat').value=p.cat_id;g('post-text').value=p.text;g('post-st').value=p.status;g('post-purl').value=p.poster_url||'';
+  if(p.poster_url){g('post-prev').style.display='block';g('post-prev-img').src=p.poster_url;}
+  const ed=g('post-btns');ed.innerHTML=(p.buttons||[]).map(b=>`<div class="ibr"><input class="fi" placeholder="Текст" value="${b.text}" style="flex:1"><input class="fi" placeholder="URL" value="${b.url}" style="flex:1.5"><button class="ibrm" onclick="this.closest('.ibr').remove()">✕</button></div>`).join('');
+  g('ov-post').style.display='flex';
+}
+function delPost(id){if(!confirm('Удалить карточку?'))return;POSTS=POSTS.filter(p=>p.id!==id);renderCon();toast('🗑 Удалено');}
+function savePost(){
+  const eid=parseInt(g('post-eid').value);
+  const cid=parseInt(g('post-cat').value);const cat=CATS.find(c=>c.id===cid);
+  const btns=[...g('post-btns').querySelectorAll('.ibr')].map(r=>{const inp=r.querySelectorAll('input');return{text:inp[0].value,url:inp[1].value};}).filter(b=>b.text);
+  const txt=g('post-text').value;
+  const d={cat_id:cid,poster_url:g('post-purl').value,title:txt.split('\n')[0].replace(/[^\wА-яЁё\s!?🔥✨💡💎]/g,'').trim().substring(0,45)||'Без названия',text:txt,buttons:btns,status:g('post-st').value,created:new Date().toLocaleDateString('ru')};
+  if(!txt){alert('Введи текст');return;}
+  if(eid){const i=POSTS.findIndex(p=>p.id===eid);if(i>=0)POSTS[i]={...POSTS[i],...d};}
+  else POSTS.unshift({id:Date.now(),...d});
+  cls('ov-post');g('post-eid').value='';g('post-text').value='';g('post-purl').value='';g('post-prev').style.display='none';
+  g('post-btns').innerHTML='<div class="ibr"><input class="fi" placeholder="Текст кнопки" style="flex:1"><input class="fi" placeholder="URL" style="flex:1.5"><button class="ibrm" onclick="this.closest(\'.ibr\').remove()">✕</button></div>';
+  g('ais-post').classList.remove('show');renderCon();toast('✅ Карточка сохранена!');
+}
+function openPost(){g('post-eid').value='';g('post-st').value='draft';g('ov-post').style.display='flex';}
+
+// ADS
+function loadAds(){
+  g('adAct').textContent=ADS.filter(a=>a.status==='active').length;
+  g('adPen').textContent=ADS.filter(a=>a.status==='pending').length;
+  g('adDon').textContent=ADS.filter(a=>a.status==='done').length;
+  g('adInc').textContent=ADS.filter(a=>a.status!=='pending').reduce((s,a)=>s+a.price,0);
+  renderAds();
+}
+function fAds(v,btn){_af=v;g('adFilterBar').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderAds();}
+function renderAds(){
+  let ads=_af==='all'?ADS:ADS.filter(a=>a.status===_af);
+  const sc={active:'sact',pending:'spen',done:'sdon'};const st={active:'📢 В канале',pending:'⏳ В очереди',done:'✅ Закончилась'};
+  g('adsCards').innerHTML=ads.length?ads.map(a=>`<div class="iphcard"><div class="di"></div><span class="cst ${sc[a.status]}">${st[a.status]}</span>
+    <div class="cposter">${a.poster_url?`<img src="${a.poster_url}">`:`<div class="cpph"><span style="font-size:38px">💼</span><span>${a.client}</span></div>`}</div>
+    <div class="cbody"><div class="ccat">💼 Реклама</div><div class="ctitle">${a.client}</div><div class="ctext">${a.text}</div>
+    <div class="admeta"><span class="adprice">${a.price} ${a.currency}</span><span class="adtag">📅 ${a.pub_at}</span>${a.del_after>0?`<span class="adtag">⏱ ${a.del_after}ч</span>`:''}</div>
+    </div><div class="cact">${a.status==='pending'?`<button class="cab csen" onclick="activateAd(${a.id})">▶ Активировать</button>`:'<div style="flex:1"></div>'}<button class="cab cedt" onclick="editAd(${a.id})">✏️</button><button class="cab cdel" onclick="delAd(${a.id})">🗑</button></div></div>`).join('') : '<div style="color:var(--muted2);font-size:11px;padding:20px;text-align:center;grid-column:1/-1">Нет кампаний</div>';
+}
+function activateAd(id){const a=ADS.find(x=>x.id===id);if(a){a.status='active';loadAds();toast('📢 Реклама активирована!');}}
+function editAd(id){const a=ADS.find(x=>x.id===id);if(!a)return;g('ad-eid').value=id;g('ad-text').value=a.text;g('ad-client').value=a.client;g('ad-contact').value=a.contact||'';g('ad-price').value=a.price;g('ad-cur').value=a.currency;g('ad-del').value=a.del_after||0;g('ad-purl').value=a.poster_url||'';g('ov-ad').style.display='flex';}
+function delAd(id){if(!confirm('Удалить кампанию?'))return;ADS=ADS.filter(a=>a.id!==id);loadAds();toast('🗑 Удалено');}
+function saveAd(){
+  const eid=parseInt(g('ad-eid').value);
+  const d={poster_url:g('ad-purl').value,text:g('ad-text').value,client:g('ad-client').value,contact:g('ad-contact').value,price:parseFloat(g('ad-price').value)||0,currency:g('ad-cur').value,del_after:parseInt(g('ad-del').value)||0,pub_at:g('ad-pub').value||new Date().toLocaleDateString('ru'),status:'pending'};
+  if(!d.text||!d.client){alert('Заполни текст и рекламодателя');return;}
+  if(eid){const i=ADS.findIndex(a=>a.id===eid);if(i>=0)ADS[i]={...ADS[i],...d};}
+  else ADS.unshift({id:Date.now(),...d});
+  cls('ov-ad');g('ad-eid').value='';g('ad-text').value='';g('ad-client').value='';g('ais-ad').classList.remove('show');
+  loadAds();toast('✅ Кампания сохранена!');
+}
+function openAd(){g('ad-eid').value='';g('ov-ad').style.display='flex';}
+
+// HERO
+function loadHero(){
+  g('hcount').textContent=HERO.length;
+  g('heroCards').innerHTML=HERO.map(h=>`<div class="iphcard"><div class="di"></div>
+    <div class="cposter">${h.poster_url?`<img src="${h.poster_url}">`:`<div class="cpph"><span style="font-size:42px">${h.emoji||'🌟'}</span></div>`}</div>
+    <div class="cbody"><div class="ccat">🌟 Персонаж</div><div class="ctitle">${h.title}</div><div class="ctext">${h.text}</div></div>
+    <div class="cact"><button class="cab cedt" onclick="previewHero(${h.id})" style="flex:2">👁 Превью</button><button class="cab cedt" onclick="editHero(${h.id})">✏️</button><button class="cab cdel" onclick="delHero(${h.id})">🗑</button></div></div>`).join('');
+}
+function previewHero(id){const h=HERO.find(x=>x.id===id);if(h)alert(`Превью:\n\n${h.emoji} ${h.title}\n\n${h.text}`);}
+function editHero(id){const h=HERO.find(x=>x.id===id);if(!h)return;g('hero-eid').value=id;g('hero-title').value=h.title;g('hero-text').value=h.text;g('hero-emoji').value=h.emoji||'';g('hero-purl').value=h.poster_url||'';g('ov-hero').style.display='flex';}
+function delHero(id){if(!confirm('Удалить карточку?'))return;HERO=HERO.filter(h=>h.id!==id);loadHero();toast('🗑 Удалено');}
+function saveHero(){
+  if(HERO.length>=6&&!g('hero-eid').value){alert('Максимум 6 карточек!');return;}
+  const eid=parseInt(g('hero-eid').value);
+  const d={title:g('hero-title').value,text:g('hero-text').value,emoji:g('hero-emoji').value||'🌟',poster_url:g('hero-purl').value};
+  if(!d.title&&!d.text){alert('Заполни заголовок или текст');return;}
+  if(eid){const i=HERO.findIndex(h=>h.id===eid);if(i>=0)HERO[i]={...HERO[i],...d};}
+  else HERO.push({id:Date.now(),...d});
+  cls('ov-hero');g('hero-eid').value='';g('hero-title').value='';g('hero-text').value='';g('ais-hero').classList.remove('show');
+  loadHero();toast('✅ Карточка сохранена!');
+}
+function openHero(){g('hero-eid').value='';g('ov-hero').style.display='flex';}
+
+// TEAM
+function loadTeam(){
+  if(TREQS.length){g('reqBlock').style.display='block';g('reqList').innerHTML=TREQS.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:11px;font-weight:700">${r.name}</div><div style="font-size:10px;color:var(--muted2)">${r.msg}</div></div><div style="font-size:9px;color:var(--muted2)">Одобрить в боте →</div></div>`).join('');}
+  else g('reqBlock').style.display='none';
+  const rc={owner:'rlo',admin:'rla',editor:'rle'};const rt={owner:'👑 Owner',admin:'🛡 Admin',editor:'✏️ Editor'};
+  g('teamTbl').innerHTML=TEAM.map(u=>`<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av">${(u.name||'?')[0]}</div><div style="font-size:11px">${u.name}</div></div></td><td><span class="rl ${rc[u.role]||''}">${rt[u.role]||u.role}</span></td><td style="font-size:10px;color:var(--muted2)"><code>${u.id}</code></td><td style="font-size:10px;color:var(--muted2)">${u.date}</td><td><div style="display:flex;gap:4px">${u.role!=='owner'?`<button class="btn bg bsm" onclick="changeRole(${u.id})" style="font-size:8px">🔄</button><button class="btn bd bsm" onclick="banTeam(${u.id},'${u.name}')" style="font-size:8px">🚫</button>`:''}</div></td></tr>`).join('');
+}
+function changeRole(id){const u=TEAM.find(x=>x.id===id);if(!u)return;const nr=u.role==='admin'?'editor':'admin';if(confirm(`Сменить роль ${u.name} на ${nr}?`)){u.role=nr;loadTeam();toast('✅ Роль изменена');}}
+function banTeam(id,name){if(!confirm(`Удалить ${name}?`))return;const i=TEAM.findIndex(x=>x.id===id);if(i>=0)TEAM.splice(i,1);loadTeam();toast('🚫 Участник удалён');}
+
+// INBOX
+function loadInbox(){
+  const uc=INBOX.filter(m=>m.status==='unread').length;
+  g('inbBdg').textContent=uc;g('sr').textContent=uc;
+  renderInbox();
+}
+function fInbox(v,btn){_if=v;document.querySelectorAll('#page-inbox .chip').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderInbox();}
+function renderInbox(){
+  let msgs=INBOX;
+  if(_if==='unread')msgs=INBOX.filter(m=>m.status==='unread');
+  else if(_if==='warn')msgs=INBOX.filter(m=>m.warn);
+  else if(_if==='starred')msgs=INBOX.filter(m=>m.starred);
+  else if(_if==='archived')msgs=INBOX.filter(m=>m.status==='archived');
+  else msgs=INBOX.filter(m=>m.status!=='deleted');
+  const sl={ig:'sig',tt:'stt',tg:'stg'};const sn={ig:'📸 Instagram',tt:'🎵 TikTok',tg:'📱 Telegram'};
+  g('inboxTbl').innerHTML=msgs.length?msgs.map(m=>`<tr class="${m.status==='unread'?'urow':''}"><td style="font-size:11px;font-weight:${m.status==='unread'?700:400}">${m.from}${m.warn?' ⚠️':''}</td><td style="font-size:10px;color:var(--muted2)">${m.msg.substring(0,48)}${m.msg.length>48?'...':''}</td><td><span class="msrc ${sl[m.src]||''} ${m.warn?'swrn':''}">${sn[m.src]||m.src}</span></td><td style="font-size:9px;color:var(--muted2)">${m.time}</td><td><div style="display:flex;gap:4px"><button class="btn bg bsm" onclick="replyMsg(${m.id},'${m.from}')" style="font-size:8px">↩️</button><button class="btn bg bsm" onclick="starMsg(${m.id})" style="font-size:8px">${m.starred?'⭐':'☆'}</button><button class="btn bg bsm" onclick="archiveMsg(${m.id})" style="font-size:8px">🗃</button></div></td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted2);padding:24px;font-size:11px">Нет сообщений</td></tr>';
+}
+function replyMsg(id,from){const t=prompt(`Ответить ${from}:`);if(t)toast(`✅ Ответ отправлен ${from}`);}
+function starMsg(id){const m=INBOX.find(x=>x.id===id);if(m){m.starred=!m.starred;renderInbox();}}
+function archiveMsg(id){const m=INBOX.find(x=>x.id===id);if(m){m.status='archived';loadInbox();}}
+
+// FINANCE
+function loadFinance(){
+  const inc=ADS.filter(a=>a.status!=='pending').reduce((s,a)=>s+a.price,0);
+  cnt('fInc',inc);cnt('fExp',0);cnt('fPro',inc);cnt('fCam',ADS.length);
+  g('fTot').textContent=inc+' UAH';g('fAvg').textContent=(ADS.length?Math.round(inc/ADS.length):0)+' UAH';
+  g('fAct2').textContent=ADS.filter(a=>a.status==='active').length;g('fDone').textContent=ADS.filter(a=>a.status==='done').length;
+  const cls2=[...new Set(ADS.map(a=>a.client))];
+  g('finTable').innerHTML=cls2.length?`<table class="tbl"><thead><tr><th>Клиент</th><th>Сумма</th><th>Кампаний</th></tr></thead><tbody>${cls2.map(cl=>{const ca=ADS.filter(a=>a.client===cl);return`<tr><td style="font-size:11px">${cl}</td><td style="color:var(--green);font-size:11px">${ca.reduce((s,a)=>s+a.price,0)} UAH</td><td style="font-size:11px">${ca.length}</td></tr>`;}).join('')}</tbody></table>`:'<div style="color:var(--muted2);font-size:11px">Нет данных</div>';
 }
 
-function archiveInbox(id){
-  if(DEMO){ const m=MOCK_INBOX.find(x=>x.id===id); if(m)m.status='archived'; loadInbox(); }
-  else { apiFetch('/api/inbox/'+id+'/archive','POST').then(()=>loadInbox()); }
+// PANIC
+function doPanic(){
+  if(!confirm('🚨 PANIC MODE\n\nОтменить все запланированные публикации?\n\nКоманда будет уведомлена!'))return;
+  const n=POSTS.filter(p=>p.status==='scheduled').length;
+  POSTS.forEach(p=>{if(p.status==='scheduled')p.status='draft';});
+  ADS.forEach(a=>{if(a.status==='pending')a.status='cancelled';});
+  renderCon();loadAds();toast(`🚨 Panic Mode! Отменено: ${n} постов`);
 }
 
-// ════════════════════════════════════════
-// ANALYTICS
-// ════════════════════════════════════════
-let _analDays = 7;
+// AI SUGGEST
+function aiSug(el,sugId,txtId){
+  clearTimeout(_aiT);
+  if(el.value.length<20){g(sugId).classList.remove('show');return;}
+  _aiT=setTimeout(()=>{
+    const demos=[`🔥 ${el.value.split('\n')[0].substring(0,40)}\n\nЭто важно потому что это меняет всё...\n\n💡 Сохрани чтобы не потерять\n👇 Ставь 🔥 если полезно`,`✨ Слушай, хочу поделиться кое-чем важным!\n\n${el.value.split('\n')[0].substring(0,50)}\n\nДай знать в комментах 💬`];
+    g(txtId).textContent=demos[Math.floor(Math.random()*demos.length)];
+    g(sugId).classList.add('show');
+  },900);
+}
+function useAi(inputId,sugId,txtId){g(inputId).value=g(txtId).textContent;g(sugId).classList.remove('show');}
 
-async function loadAnalytics(){
-  let d;
-  if(DEMO){
-    const posts = MOCK.posts;
-    const pub = posts.filter(p=>p.status==='published').length;
-    const drf = posts.filter(p=>p.status==='draft').length;
-    d = {total:posts.length, published:pub, drafts:drf, conversion:pub?Math.round(pub/posts.length*100):0,
-      roi:{impressions:MOCK.roi.impressions,clicks:MOCK.roi.clicks,ctr:MOCK.roi.ctr,income:2000},
-      recent:posts.slice(0,5)};
-  } else {
-    try{d=await apiFetch(`/api/analytics?days=${_analDays}`);}catch(e){return;}
-  }
-  cnt('an-p',d.total||0); cnt('an-pub',d.published||0); cnt('an-drf',d.drafts||0);
-  g('an-cv').textContent=(d.conversion||0)+'%';
-  g('an-imp').textContent=(d.roi?.impressions||0).toLocaleString();
-  g('an-clk').textContent=(d.roi?.clicks||0).toLocaleString();
-  g('an-ctr').textContent=(d.roi?.ctr||0)+'%';
-  g('an-inc').textContent=(d.roi?.income||0)+' UAH';
-  const stIc={published:'📤',draft:'📝',scheduled:'⏳'};
-  g('analPosts').innerHTML=(d.recent||[]).map(p=>
-    `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,42,58,.4)">
-      <span>${stIc[p.status]||'📋'}</span>
-      <div style="flex:1;font-size:11px">${(p.text_ru||p.text||'').substring(0,60)}</div>
-      <span style="font-size:10px;color:var(--muted)">${p.created_at}</span>
-    </div>`).join('') || '<div style="color:var(--muted);font-size:12px">Нет данных</div>';
+// POSTER GEN
+function openPosterGen(targetId){_pgenTarget=targetId;g('pgen-prompt').value='';g('ov-pgen').style.display='flex';}
+function runPosterGen(){
+  const p=g('pgen-prompt').value;if(!p){alert('Введи описание');return;}
+  const btn=g('pgen-btn');btn.textContent='⏳ Генерирую...';btn.disabled=true;
+  setTimeout(()=>{btn.textContent='🎨 Сгенерировать';btn.disabled=false;alert('🎨 AI-генерация постеров работает через подключённый backend.\n\nВ демо-режиме вставь URL изображения в поле выше.');},1500);
 }
 
-function fAnal(days,btn){
-  _analDays=days;
-  document.querySelectorAll('#page-analytics .tab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); loadAnalytics();
+// URL PREVIEW
+function previewUrl(el,prevId){
+  const url=el.value.trim();const prev=g(prevId);
+  if(url){prev.style.display='block';prev.querySelector('img').src=url;}
+  else prev.style.display='none';
 }
 
-if(window.Telegram?.WebApp){
-  const tg=window.Telegram.WebApp;
-  tg.expand(); tg.setHeaderColor('#0a0a0f'); tg.setBackgroundColor('#0a0a0f');
+// INLINE BUTTONS
+function addBtn(editorId){
+  const ed=g(editorId);const row=document.createElement('div');row.className='ibr';
+  row.innerHTML='<input class="fi" placeholder="Текст кнопки" style="flex:1"><input class="fi" placeholder="URL" style="flex:1.5"><button class="ibrm" onclick="this.closest(\'.ibr\').remove()">✕</button>';
+  ed.appendChild(row);
 }
+
+// CATS for selects
+function populateCats(){
+  const sel=g('post-cat');
+  if(sel)sel.innerHTML='<option value="">— Категория</option>'+CATS.map(c=>`<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+}
+
+// THEME
+function setTheme(th,btn){
+  document.documentElement.setAttribute('data-theme',th);localStorage.setItem('omni_theme',th);
+  document.querySelectorAll('.thcard').forEach(c=>c.classList.remove('active'));btn.classList.add('active');
+  setTimeout(loadDash,100);
+}
+
+// SHEET
+function cls(id){g(id).style.display='none';}
+
+// SETUP
+function showSetup(){g('sov').style.display='flex';g('su').value=CFG.url;g('sk').value=CFG.key;}
+async function saveConfig(){
+  const url=g('su').value.trim().replace(/\/$/,''),key=g('sk').value.trim();if(!url||!key)return;
+  try{const r=await fetch(url+'/',{headers:{'X-Api-Key':key}});if(!r.ok)throw new Error('Неверный ключ или IP');
+  localStorage.setItem('omni_url',url);localStorage.setItem('omni_key',key);g('sov').style.display='none';}
+  catch(e){g('se').style.display='block';g('se').textContent='❌ '+e.message;}
+}
+
+// TOAST
+function toast(msg){
+  const el=g('toastEl');el.textContent=msg;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+function g(id){return document.getElementById(id);}
+function pw(id,v){const e=g(id);if(e)e.style.width=Math.min(100,v)+'%';}
+function cnt(id,target){
+  const e=g(id);if(!e)return;let c=0;const s=Math.ceil(target/20)||1;
+  const t=setInterval(()=>{c=Math.min(c+s,target);e.textContent=c;if(c>=target)clearInterval(t);},40);
+}
+if(window.Telegram?.WebApp){const tg=window.Telegram.WebApp;tg.expand();}
 </script>
 </body>
 </html>

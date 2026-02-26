@@ -142,7 +142,9 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
   <button class="nb" onclick="gp('finance',this)">💰 Финансы</button>
   <button class="nb" onclick="gp('team',this)">👥 Команда<span class="bdg" id="rBdg">0</span></button>
   <button class="nb" onclick="gp('hero',this)">🌟 Персонаж</button>
+  <button class="nb" onclick="gp('inbox',this)">📨 Инбокс<span class="bdg" id="inbBdg">0</span></button>
   <button class="nb" onclick="gp('logs',this)">📋 Логи</button>
+  <button class="nb" onclick="gp('analytics',this)">📊 Аналитика</button>
   <button class="nb" onclick="gp('bset',this)">⚙️ Настройки</button>
 </nav>
 
@@ -235,7 +237,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
   </div>
   <div class="card" style="padding:0;overflow:hidden">
     <table class="tbl">
-      <thead><tr><th>Участник</th><th>Роль</th><th>Telegram ID</th><th>Дата</th></tr></thead>
+      <thead><tr><th>Участник</th><th>Роль</th><th>Telegram ID</th><th>Дата</th><th>Действия</th></tr></thead>
       <tbody id="teamTbl"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
     </table>
   </div>
@@ -266,6 +268,23 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
   </div>
 </div>
 
+<!-- ██ INBOX ██ -->
+<div id="page-inbox" class="page">
+  <div class="sh"><div class="stit">Инбокс</div></div>
+  <div class="tabs">
+    <button class="tab active" onclick="fInbox('all',this)">Все</button>
+    <button class="tab" onclick="fInbox('unread',this)">Непрочитанные</button>
+    <button class="tab" onclick="fInbox('starred',this)">⭐ Важные</button>
+    <button class="tab" onclick="fInbox('archived',this)">Архив</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr><th>От кого</th><th>Сообщение</th><th>Источник</th><th>Время</th><th>Действия</th></tr></thead>
+      <tbody id="inboxTbl"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
 <!-- ██ LOGS ██ -->
 <div id="page-logs" class="page">
   <div class="sh"><div class="stit">Логи действий</div></div>
@@ -281,6 +300,30 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <thead><tr><th>Действие</th><th>Автор</th><th>Объект</th><th>Время</th></tr></thead>
       <tbody id="logsTbl"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
     </table>
+  </div>
+</div>
+
+<!-- ██ ANALYTICS ██ -->
+<div id="page-analytics" class="page">
+  <div class="sh"><div class="stit">Аналитика</div></div>
+  <div class="tabs">
+    <button class="tab active" onclick="fAnal(7,this)">7 дней</button>
+    <button class="tab" onclick="fAnal(30,this)">30 дней</button>
+    <button class="tab" onclick="fAnal(0,this)">Всё время</button>
+  </div>
+  <div class="g4">
+    <div class="stat" style="--al:var(--accent2)"><div class="sl">Постов</div><div class="sv" id="an-p">—</div></div>
+    <div class="stat" style="--al:var(--green)"><div class="sl">Опубликовано</div><div class="sv" id="an-pub">—</div></div>
+    <div class="stat" style="--al:var(--muted)"><div class="sl">Черновики</div><div class="sv" id="an-drf">—</div></div>
+    <div class="stat" style="--al:var(--blue)"><div class="sl">Конверсия</div><div class="sv" id="an-cv">—</div></div>
+  </div>
+  <div class="card"><div class="ct">Последние посты <span class="ctl"></span></div><div id="analPosts">—</div></div>
+  <div class="card">
+    <div class="ct">Рекламная статистика <span class="ctl"></span></div>
+    <div class="fi-row"><div class="fi-lbl">Показы</div><div class="fi-val" id="an-imp">—</div></div>
+    <div class="fi-row"><div class="fi-lbl">Клики</div><div class="fi-val" id="an-clk">—</div></div>
+    <div class="fi-row"><div class="fi-lbl">CTR</div><div class="fi-val g" id="an-ctr">—</div></div>
+    <div class="fi-row"><div class="fi-lbl">Доход от рекламы</div><div class="fi-val g" id="an-inc">—</div></div>
   </div>
 </div>
 
@@ -319,8 +362,18 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 <div id="m-post" class="mo" style="display:none" onclick="if(event.target===this)cm('m-post')">
 <div class="mb">
   <div class="mt">Новый пост <button class="mc" onclick="cm('m-post')">✕</button></div>
-  <div class="fg"><label class="fl">Текст RU</label><textarea class="fta" id="pt-ru" placeholder="Текст на русском..."></textarea></div>
+  <div class="fg">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <label class="fl" style="margin:0">Текст RU</label>
+      <button class="btn bg bsm" onclick="aiGenPost()" style="font-size:9px">🤖 AI генерация</button>
+    </div>
+    <textarea class="fta" id="pt-ru" placeholder="Текст на русском..."></textarea>
+  </div>
   <div class="fg"><label class="fl">Текст UK</label><textarea class="fta" id="pt-uk" placeholder="Текст українською..."></textarea></div>
+  <div class="fg">
+    <label class="fl">Медиа (URL изображения)</label>
+    <input class="fi" id="pt-media" placeholder="https://... или оставь пустым">
+  </div>
   <div class="fr2">
     <div class="fg"><label class="fl">Категория</label><select class="fs" id="pt-cat"><option value="">— Без категории</option></select></div>
     <div class="fg"><label class="fl">Статус</label>
@@ -484,8 +537,10 @@ const MOCK = {
 // INIT
 // ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  // Auto-start demo if no API configured
   if (!CFG.url || !CFG.key) {
-    document.getElementById('setupOv').style.display = 'flex';
+    DEMO = true;
+    loadAll();
   } else {
     loadAll();
   }
@@ -505,7 +560,7 @@ function gp(id, btn) {
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   btn.classList.add('active');
-  const map={content:()=>{loadContent();loadCats();},ads:loadAds,finance:loadFinance,team:loadTeam,hero:loadHero,logs:()=>loadLogs('all')};
+  const map={content:()=>{loadContent();loadCats();},ads:loadAds,finance:loadFinance,team:loadTeam,hero:loadHero,inbox:loadInbox,analytics:loadAnalytics,logs:()=>loadLogs('all')};
   if(map[id]) map[id]();
 }
 
@@ -719,7 +774,16 @@ async function loadTeam(){
   } else g('reqBlk').style.display='none';
   const rc={owner:'rl-o',admin:'rl-a',editor:'rl-e'};
   const rt={owner:'Owner',admin:'Admin',editor:'Editor',analyst:'Analyst'};
-  g('teamTbl').innerHTML=d.members.map(u=>`<tr><td><div style="display:flex;align-items:center;gap:10px"><div class="av">${(u.name||'?')[0]}</div><div style="font-size:12px">${u.name}</div></div></td><td><span class="rl ${rc[u.role]||''}">${rt[u.role]||u.role}</span></td><td style="font-size:11px;color:var(--muted)"><code>${u.id}</code></td><td style="font-size:11px;color:var(--muted)">${u.date}</td></tr>`).join('');
+  g('teamTbl').innerHTML=d.members.map(u=>`<tr>
+  <td><div style="display:flex;align-items:center;gap:10px"><div class="av">${(u.name||'?')[0]}</div><div style="font-size:12px">${u.name}</div></div></td>
+  <td><span class="rl ${rc[u.role]||''}">${rt[u.role]||u.role}</span></td>
+  <td style="font-size:11px;color:var(--muted)"><code>${u.id}</code></td>
+  <td style="font-size:11px;color:var(--muted)">${u.date}</td>
+  <td><div style="display:flex;gap:5px">
+    ${u.role!=='owner'?`<button class="btn bg bsm" onclick="changeRole(${u.id},'${u.role}')" title="Сменить роль">🔄</button>`:''}
+    ${u.role!=='owner'?`<button class="btn bd bsm" onclick="banUser(${u.id},'${u.name}')" title="Забанить">🚫</button>`:''}
+  </div></td>
+</tr>`).join('');
 }
 
 // ════════════════════════════════════════
@@ -832,6 +896,180 @@ function cnt(id,target){
   const e=g(id); if(!e)return; let c=0;
   const s=Math.ceil(target/20)||1;
   const t=setInterval(()=>{c=Math.min(c+s,target);e.textContent=c;if(c>=target)clearInterval(t);},50);
+}
+
+
+// ════════════════════════════════════════
+// PANIC MODE
+// ════════════════════════════════════════
+function activatePanic(){
+  if(!confirm('⚠️ PANIC MODE\n\nЭто немедленно:\n• Остановит все запланированные посты\n• Уведомит всю команду\n\nПродолжить?')) return;
+  if(DEMO){
+    alert('🚨 PANIC MODE активирован!\n\nОтменено запланированных постов: '+MOCK.posts.filter(p=>p.status==='scheduled').length+'\nКоманда уведомлена.');
+    MOCK.posts.forEach(p=>{if(p.status==='scheduled')p.status='draft';});
+    MOCK.logs.unshift({action:'panic_mode',author:'Вы',entity:'Система',time:'только что'});
+    loadContent(); loadLogs('all');
+  } else {
+    apiFetch('/api/panic','POST').then(()=>alert('🚨 Panic Mode активирован!')).catch(e=>alert('Ошибка: '+e.message));
+  }
+}
+
+// ════════════════════════════════════════
+// AI POST GENERATION
+// ════════════════════════════════════════
+async function aiGenPost(){
+  const topic = prompt('Тема поста (оставь пустым для авто):') ?? '';
+  const ta = g('pt-ru');
+  ta.value = '⏳ Генерирую...';
+  ta.disabled = true;
+  if(DEMO){
+    await new Promise(r=>setTimeout(r,1200));
+    const demos = [
+      '🔥 Топ-5 трендов SMM которые взорвут 2026 год\n\nМаркетинг меняется быстрее чем когда-либо. Вот что реально работает прямо сейчас:\n\n1️⃣ Короткий видео-контент\n2️⃣ AI-персонализация\n3️⃣ Нативная реклама\n4️⃣ UGC контент\n5️⃣ Community building\n\nСохрани и перешли — пригодится 👇',
+      '💡 Как увеличить охваты в 3 раза за месяц\n\nРаботает без бюджета. Проверено на собственном канале.\n\n✅ Публикуй в одно время каждый день\n✅ Используй 3-5 тематических хэштегов\n✅ Отвечай на комментарии в первые 30 минут\n\nПробовал? Пиши результат в комментарии 👇',
+      '📈 Кейс: с 0 до 10к подписчиков за 60 дней\n\nРасскажу как это было. Без накрутки, без рекламы.\n\nГлавный секрет — последовательность и системный подход.\n\nЧитай полный разбор по ссылке ниже 👇'
+    ];
+    ta.value = topic ? `📝 ${topic}\n\n` + demos[0] : demos[Math.floor(Math.random()*demos.length)];
+  } else {
+    try {
+      const d = await apiFetch('/api/ai/generate-post', 'POST', {topic});
+      ta.value = d.text;
+    } catch(e) { ta.value = ''; alert('Ошибка AI: '+e.message); }
+  }
+  ta.disabled = false;
+}
+
+// ════════════════════════════════════════
+// TEAM ACTIONS
+// ════════════════════════════════════════
+function changeRole(userId, currentRole){
+  const roles = ['editor','admin'];
+  const newRole = currentRole === 'admin' ? 'editor' : 'admin';
+  if(!confirm(`Сменить роль на ${newRole.toUpperCase()}?`)) return;
+  if(DEMO){
+    const u = MOCK.team.find(x=>x.id===userId);
+    if(u) { u.role=newRole; MOCK.logs.unshift({action:'change_role',author:'Вы',entity:`${u.name} → ${newRole}`,time:'только что'}); }
+    loadTeam();
+  } else {
+    apiFetch('/api/team/'+userId+'/role','POST',{role:newRole}).then(()=>loadTeam()).catch(e=>alert('Ошибка: '+e.message));
+  }
+}
+
+function banUser(userId, userName){
+  if(!confirm(`Забанить ${userName}?`)) return;
+  if(DEMO){
+    MOCK.team = MOCK.team.filter(u=>u.id!==userId);
+    MOCK.logs.unshift({action:'ban_user',author:'Вы',entity:userName,time:'только что'});
+    loadTeam();
+  } else {
+    apiFetch('/api/team/'+userId+'/ban','POST').then(()=>loadTeam()).catch(e=>alert('Ошибка: '+e.message));
+  }
+}
+
+// ════════════════════════════════════════
+// INBOX
+// ════════════════════════════════════════
+let _inboxFilter = 'all';
+
+const MOCK_INBOX = [
+  {id:1,from:'Иван П.',msg:'Привет! Можно вопрос про ваш курс?',source:'bot',status:'unread',starred:false,time:'сегодня 14:30'},
+  {id:2,from:'Анна С.',msg:'Хочу стать частью команды, готова помочь с контентом',source:'channel',status:'unread',starred:true,time:'сегодня 12:15'},
+  {id:3,from:'Олег Р.',msg:'Когда выйдет новый материал по маркетингу?',source:'bot',status:'read',starred:false,time:'вчера 18:44'},
+  {id:4,from:'Марина К.',msg:'Спасибо за контент! Очень помогает в работе',source:'bot',status:'read',starred:true,time:'вчера 11:20'},
+  {id:5,from:'Дмитрий В.',msg:'Есть ли у вас консультации по SMM?',source:'channel',status:'archived',starred:false,time:'23.02 09:15'},
+];
+
+async function loadInbox(){
+  let msgs;
+  if(DEMO){ msgs=MOCK_INBOX; }
+  else { try{const d=await apiFetch('/api/inbox');msgs=d.messages;}catch(e){return;} }
+  
+  const unread = msgs.filter(m=>m.status==='unread').length;
+  g('inbBdg').textContent = unread;
+  
+  const filtered = _inboxFilter==='all' ? msgs.filter(m=>m.status!=='deleted') :
+    _inboxFilter==='unread' ? msgs.filter(m=>m.status==='unread') :
+    _inboxFilter==='starred' ? msgs.filter(m=>m.starred) :
+    msgs.filter(m=>m.status==='archived');
+  
+  g('inboxTbl').innerHTML = filtered.length ? filtered.map(m=>`
+    <tr style="${m.status==='unread'?'background:rgba(124,58,237,.04)':''}">
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="av" style="width:24px;height:24px;font-size:10px">${(m.from||'?')[0]}</div>
+          <div style="font-size:12px;font-weight:${m.status==='unread'?'700':'400'}">${m.from}${m.status==='unread'?' 🔵':''}</div>
+        </div>
+      </td>
+      <td style="font-size:11px;color:var(--muted)">${m.msg.substring(0,50)}${m.msg.length>50?'...':''}</td>
+      <td style="font-size:10px;color:var(--muted)">${m.source==='channel'?'📢 Канал':'🤖 Бот'}</td>
+      <td style="font-size:10px;color:var(--muted)">${m.time}</td>
+      <td><div style="display:flex;gap:4px">
+        <button class="btn bg bsm" onclick="replyInbox(${m.id},'${m.from.replace(/'/g,"\\'")}')">↩️</button>
+        <button class="btn bg bsm" onclick="starInbox(${m.id})" title="${m.starred?'Убрать':'В важные'}">${m.starred?'⭐':'☆'}</button>
+        <button class="btn bg bsm" onclick="archiveInbox(${m.id})" title="В архив">🗃</button>
+      </div></td>
+    </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Нет сообщений</td></tr>';
+}
+
+function fInbox(f,btn){
+  _inboxFilter=f;
+  document.querySelectorAll('#page-inbox .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); loadInbox();
+}
+
+function replyInbox(id,fromName){
+  const text = prompt(`Ответить ${fromName}:`);
+  if(!text) return;
+  if(DEMO){ alert('✅ Ответ отправлен: '+text); }
+  else { apiFetch('/api/inbox/'+id+'/reply','POST',{text}).then(()=>alert('✅ Отправлено!')).catch(e=>alert('Ошибка: '+e.message)); }
+}
+
+function starInbox(id){
+  if(DEMO){ const m=MOCK_INBOX.find(x=>x.id===id); if(m)m.starred=!m.starred; loadInbox(); }
+  else { apiFetch('/api/inbox/'+id+'/star','POST').then(()=>loadInbox()); }
+}
+
+function archiveInbox(id){
+  if(DEMO){ const m=MOCK_INBOX.find(x=>x.id===id); if(m)m.status='archived'; loadInbox(); }
+  else { apiFetch('/api/inbox/'+id+'/archive','POST').then(()=>loadInbox()); }
+}
+
+// ════════════════════════════════════════
+// ANALYTICS
+// ════════════════════════════════════════
+let _analDays = 7;
+
+async function loadAnalytics(){
+  let d;
+  if(DEMO){
+    const posts = MOCK.posts;
+    const pub = posts.filter(p=>p.status==='published').length;
+    const drf = posts.filter(p=>p.status==='draft').length;
+    d = {total:posts.length, published:pub, drafts:drf, conversion:pub?Math.round(pub/posts.length*100):0,
+      roi:{impressions:MOCK.roi.impressions,clicks:MOCK.roi.clicks,ctr:MOCK.roi.ctr,income:2000},
+      recent:posts.slice(0,5)};
+  } else {
+    try{d=await apiFetch(`/api/analytics?days=${_analDays}`);}catch(e){return;}
+  }
+  cnt('an-p',d.total||0); cnt('an-pub',d.published||0); cnt('an-drf',d.drafts||0);
+  g('an-cv').textContent=(d.conversion||0)+'%';
+  g('an-imp').textContent=(d.roi?.impressions||0).toLocaleString();
+  g('an-clk').textContent=(d.roi?.clicks||0).toLocaleString();
+  g('an-ctr').textContent=(d.roi?.ctr||0)+'%';
+  g('an-inc').textContent=(d.roi?.income||0)+' UAH';
+  const stIc={published:'📤',draft:'📝',scheduled:'⏳'};
+  g('analPosts').innerHTML=(d.recent||[]).map(p=>
+    `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(42,42,58,.4)">
+      <span>${stIc[p.status]||'📋'}</span>
+      <div style="flex:1;font-size:11px">${(p.text_ru||p.text||'').substring(0,60)}</div>
+      <span style="font-size:10px;color:var(--muted)">${p.created_at}</span>
+    </div>`).join('') || '<div style="color:var(--muted);font-size:12px">Нет данных</div>';
+}
+
+function fAnal(days,btn){
+  _analDays=days;
+  document.querySelectorAll('#page-analytics .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); loadAnalytics();
 }
 
 if(window.Telegram?.WebApp){

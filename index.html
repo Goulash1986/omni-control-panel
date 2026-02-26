@@ -6,995 +6,838 @@
 <title>OMNI-CONTROL 2026</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@300;400;600&display=swap');
+:root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--border:#2a2a3a;--accent:#7c3aed;--accent2:#a855f7;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;--blue:#3b82f6;--text:#e2e8f0;--muted:#64748b;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(124,58,237,.015) 2px,rgba(124,58,237,.015) 4px);pointer-events:none;z-index:9999;}
 
-  :root {
-    --bg:       #0a0a0f;
-    --bg2:      #111118;
-    --bg3:      #1a1a24;
-    --border:   #2a2a3a;
-    --accent:   #7c3aed;
-    --accent2:  #a855f7;
-    --green:    #10b981;
-    --red:      #ef4444;
-    --yellow:   #f59e0b;
-    --blue:     #3b82f6;
-    --text:     #e2e8f0;
-    --muted:    #64748b;
-    --tg-color: var(--accent);
-  }
+.header{position:sticky;top:0;z-index:100;background:rgba(10,10,15,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;background:linear-gradient(135deg,var(--accent2),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hdr-r{display:flex;align-items:center;gap:10px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+.btn-api{background:none;border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:6px;font-family:inherit;font-size:10px;cursor:pointer;letter-spacing:1px;transition:all .2s;}
+.btn-api:hover{border-color:var(--accent);color:var(--text);}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+.nav{display:flex;gap:2px;padding:8px 12px;background:var(--bg2);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+.nav::-webkit-scrollbar{display:none;}
+.nb{padding:7px 13px;border:none;background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:6px;white-space:nowrap;transition:all .2s;}
+.nb.active{background:rgba(124,58,237,.15);color:var(--accent2);border:1px solid rgba(124,58,237,.3);}
+.nb:not(.active):hover{color:var(--text);background:var(--bg3);}
+.bdg{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--accent);color:white;font-size:10px;font-weight:700;margin-left:4px;}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    overflow-x: hidden;
-    min-height: 100vh;
-  }
+.page{display:none;padding:16px;animation:fi .25s ease;}
+.page.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 
-  /* SCANLINE OVERLAY */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg, transparent, transparent 2px,
-      rgba(124,58,237,0.015) 2px, rgba(124,58,237,0.015) 4px
-    );
-    pointer-events: none;
-    z-index: 9999;
-  }
+.g4{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+@media(min-width:580px){.g4{grid-template-columns:repeat(4,1fr);}}
 
-  /* NOISE TEXTURE */
-  body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 9998;
-    opacity: 0.4;
-  }
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden;transition:border-color .2s;}
+.stat:hover{border-color:var(--accent);}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--al,var(--accent));}
+.sl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.sv{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;line-height:1;}
+.ss{font-size:10px;margin-top:4px;color:var(--muted);}
 
-  /* HEADER */
-  .header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(10,10,15,0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-    padding: 0 16px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px;}
+.ct{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ctl{flex:1;height:1px;background:var(--border);}
 
-  .logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px;
-    letter-spacing: 3px;
-    background: linear-gradient(135deg, var(--accent2), var(--blue));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);}
+.tbl td{padding:10px;border-bottom:1px solid rgba(42,42,58,.5);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:rgba(124,58,237,.04);}
 
-  .header-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    color: var(--muted);
-  }
+.st{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;}
+.st-pub,.st-act{background:rgba(16,185,129,.12);color:var(--green);}
+.st-drf{background:rgba(100,116,139,.12);color:var(--muted);}
+.st-sch,.st-pen{background:rgba(245,158,11,.12);color:var(--yellow);}
+.st-can,.st-del{background:rgba(239,68,68,.12);color:var(--red);}
 
-  .status-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--green);
-    box-shadow: 0 0 6px var(--green);
-    animation: pulse 2s infinite;
-  }
+.btn{padding:8px 16px;border-radius:7px;border:none;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+.bp{background:var(--accent);color:white;}
+.bp:hover{background:var(--accent2);transform:translateY(-1px);}
+.bg{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.bg:hover{border-color:var(--accent);color:var(--text);}
+.bd{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);}
+.bsuc{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3);}
+.bsm{padding:4px 10px;font-size:10px;}
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
+.fg{margin-bottom:14px;}
+.fl{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;display:block;}
+.fi,.fs,.fta{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--accent);}
+.fta{resize:vertical;min-height:90px;line-height:1.6;}
+.fs option{background:var(--bg3);}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fa{display:flex;gap:8px;margin-top:16px;}
 
-  /* NAV */
-  .nav {
-    display: flex;
-    gap: 2px;
-    padding: 8px 12px;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .nav::-webkit-scrollbar { display: none; }
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.stit{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;}
 
-  .nav-btn {
-    padding: 7px 14px;
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 6px;
-    white-space: nowrap;
-    transition: all 0.2s;
-    position: relative;
-  }
+.tabs{display:flex;gap:2px;margin-bottom:14px;background:var(--bg2);border-radius:8px;padding:4px;overflow-x:auto;}
+.tab{padding:6px 12px;border:none;background:transparent;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;cursor:pointer;border-radius:6px;transition:all .2s;white-space:nowrap;}
+.tab.active{background:var(--accent);color:white;}
 
-  .nav-btn.active {
-    background: rgba(124,58,237,0.15);
-    color: var(--accent2);
-    border: 1px solid rgba(124,58,237,0.3);
-  }
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.87);display:flex;align-items:flex-end;justify-content:center;z-index:1000;backdrop-filter:blur(8px);}
+.mb{background:var(--bg2);border:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;animation:su .3s ease;}
+@keyframes su{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.mt{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.mc{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
 
-  .nav-btn:not(.active):hover {
-    color: var(--text);
-    background: var(--bg3);
-  }
+.pr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.pl{width:90px;font-size:11px;color:var(--muted);}
+.pw{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.pb{height:100%;border-radius:3px;transition:width 1s ease;}
+.pv{width:50px;text-align:right;font-size:11px;}
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
-    border-radius: 8px;
-    background: var(--accent);
-    color: white;
-    font-size: 10px;
-    font-weight: 700;
-    margin-left: 4px;
-  }
+.chw{position:relative;height:180px;margin-top:8px;}
 
-  /* PAGES */
-  .page { display: none; padding: 16px; animation: fadeIn 0.3s ease; }
-  .page.active { display: block; }
+.fi-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(42,42,58,.4);}
+.fi-row:last-child{border-bottom:none;}
+.fi-lbl{font-size:12px;color:var(--muted);}
+.fi-val{font-size:13px;font-weight:600;}
+.fi-val.g{color:var(--green);}
+.fi-val.r{color:var(--red);}
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
+.av{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--blue));display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;}
+.rl{padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;}
+.rl-o{background:rgba(168,85,247,.15);color:var(--accent2);border:1px solid rgba(168,85,247,.3);}
+.rl-a{background:rgba(59,130,246,.12);color:var(--blue);border:1px solid rgba(59,130,246,.3);}
+.rl-e{background:rgba(16,185,129,.12);color:var(--green);border:1px solid rgba(16,185,129,.3);}
 
-  /* GRID */
-  .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
-  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
-  @media (min-width: 600px) {
-    .grid-4 { grid-template-columns: repeat(4, 1fr); }
-    .grid-2 { grid-template-columns: repeat(2, 1fr); }
-  }
+.feed-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid rgba(42,42,58,.4);}
+.feed-item:last-child{border-bottom:none;}
+.feed-ic{width:28px;height:28px;border-radius:8px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 
-  /* STAT CARD */
-  .stat-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .stat-card:hover { border-color: var(--accent); }
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--accent-line, var(--accent));
-  }
+.poster-banner{height:110px;background:linear-gradient(135deg,#1e0a3c,#0d1b4b);display:flex;align-items:center;justify-content:center;font-size:44px;border-radius:10px 10px 0 0;}
 
-  .stat-label {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
+.setup-ov{position:fixed;inset:0;background:rgba(0,0,0,.93);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(12px);}
+.setup-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:28px;width:90%;max-width:380px;}
 
-  .stat-value {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 32px;
-    letter-spacing: 1px;
-    line-height: 1;
-    color: var(--text);
-  }
-
-  .stat-delta {
-    font-size: 10px;
-    margin-top: 4px;
-    color: var(--green);
-  }
-
-  .stat-delta.down { color: var(--red); }
-
-  /* CARD */
-  .card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 12px;
-  }
-
-  .card-title {
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .card-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  /* TABLE */
-  .table { width: 100%; border-collapse: collapse; }
-  .table th {
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 8px 10px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-  }
-  .table td {
-    padding: 10px 10px;
-    border-bottom: 1px solid rgba(42,42,58,0.5);
-    vertical-align: middle;
-  }
-  .table tr:last-child td { border-bottom: none; }
-  .table tr:hover td { background: rgba(124,58,237,0.05); }
-
-  /* STATUS BADGES */
-  .status {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-  .status-dot-sm { width: 5px; height: 5px; border-radius: 50%; }
-  .status.published  { background: rgba(16,185,129,0.12); color: var(--green);  }
-  .status.draft      { background: rgba(100,116,139,0.12); color: var(--muted); }
-  .status.scheduled  { background: rgba(245,158,11,0.12); color: var(--yellow); }
-  .status.active     { background: rgba(16,185,129,0.12); color: var(--green);  }
-  .status.pending    { background: rgba(245,158,11,0.12); color: var(--yellow); }
-  .status.cancelled  { background: rgba(239,68,68,0.12);  color: var(--red);    }
-
-  /* AVATAR */
-  .avatar {
-    width: 30px; height: 30px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, var(--accent), var(--blue));
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: white;
-    flex-shrink: 0;
-  }
-
-  /* ROLE BADGE */
-  .role {
-    padding: 2px 7px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 600;
-  }
-  .role.owner  { background: rgba(168,85,247,0.15); color: var(--accent2); border: 1px solid rgba(168,85,247,0.3); }
-  .role.admin  { background: rgba(59,130,246,0.12); color: var(--blue);    border: 1px solid rgba(59,130,246,0.3); }
-  .role.editor { background: rgba(16,185,129,0.12); color: var(--green);   border: 1px solid rgba(16,185,129,0.3); }
-
-  /* CHART WRAPPER */
-  .chart-wrap {
-    position: relative;
-    height: 180px;
-    margin-top: 8px;
-  }
-
-  /* PROGRESS BAR */
-  .progress-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-  .progress-label { width: 80px; font-size: 11px; color: var(--muted); flex-shrink: 0; }
-  .progress-bar-wrap { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
-  .progress-bar { height: 100%; border-radius: 3px; transition: width 1s ease; }
-  .progress-val { width: 35px; text-align: right; font-size: 11px; color: var(--text); }
-
-  /* HERO CARD */
-  .hero-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 12px;
-  }
-  .hero-banner {
-    height: 100px;
-    background: linear-gradient(135deg, #1e0a3c, #0d1b4b, #0a2a1a);
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    padding: 12px;
-  }
-  .hero-banner::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Ccircle cx='30' cy='30' r='20' fill='none' stroke='rgba(124,58,237,0.1)' stroke-width='1'/%3E%3Ccircle cx='30' cy='30' r='10' fill='none' stroke='rgba(168,85,247,0.08)' stroke-width='1'/%3E%3C/svg%3E");
-  }
-  .hero-avatar-lg {
-    width: 56px; height: 56px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, var(--accent), var(--blue));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    border: 2px solid rgba(255,255,255,0.1);
-    position: relative;
-  }
-  .hero-info { padding: 12px 14px; }
-  .hero-name { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; }
-  .hero-bio { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.6; }
-
-  /* ACTIVITY FEED */
-  .feed-item {
-    display: flex;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(42,42,58,0.4);
-  }
-  .feed-item:last-child { border-bottom: none; }
-  .feed-icon {
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    background: var(--bg3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    flex-shrink: 0;
-  }
-  .feed-text { font-size: 12px; line-height: 1.4; }
-  .feed-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
-
-  /* BUTTONS */
-  .btn {
-    padding: 8px 16px;
-    border-radius: 7px;
-    border: none;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .btn-primary {
-    background: var(--accent);
-    color: white;
-  }
-  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
-  .btn-ghost {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-  }
-  .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
-  .btn-danger {
-    background: rgba(239,68,68,0.1);
-    color: var(--red);
-    border: 1px solid rgba(239,68,68,0.2);
-  }
-
-  /* SECTION HEADER */
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .section-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 18px;
-    letter-spacing: 2px;
-    color: var(--text);
-  }
-
-  /* METRIC ROW */
-  .metric-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid rgba(42,42,58,0.4);
-  }
-  .metric-row:last-child { border-bottom: none; }
-  .metric-name { font-size: 12px; color: var(--muted); }
-  .metric-val { font-size: 14px; font-weight: 600; }
-
-  /* LOADING */
-  .skeleton {
-    background: linear-gradient(90deg, var(--bg3) 25%, var(--bg2) 50%, var(--bg3) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    border-radius: 6px;
-    height: 14px;
-  }
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+::-webkit-scrollbar-thumb:hover{background:var(--accent);}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="header">
   <div class="logo">OMNI-CONTROL</div>
-  <div class="header-status">
-    <div class="status-dot"></div>
-    <span id="botStatus">@Alinych_Andreevich_Bot</span>
+  <div class="hdr-r">
+    <div class="dot"></div>
+    <button class="btn-api" onclick="showSetup()">⚙ API</button>
   </div>
 </header>
 
-<!-- NAV -->
 <nav class="nav">
-  <button class="nav-btn active" onclick="showPage('dashboard')">📊 Дашборд</button>
-  <button class="nav-btn" onclick="showPage('content')">📦 Контент</button>
-  <button class="nav-btn" onclick="showPage('ads')">💼 Реклама</button>
-  <button class="nav-btn" onclick="showPage('team')">👥 Команда <span class="badge" id="reqBadge">0</span></button>
-  <button class="nav-btn" onclick="showPage('hero')">🌟 Персонаж</button>
+  <button class="nb active" onclick="gp('dashboard',this)">📊 Дашборд</button>
+  <button class="nb" onclick="gp('content',this)">📦 Контент</button>
+  <button class="nb" onclick="gp('ads',this)">💼 Реклама</button>
+  <button class="nb" onclick="gp('finance',this)">💰 Финансы</button>
+  <button class="nb" onclick="gp('team',this)">👥 Команда<span class="bdg" id="rBdg">0</span></button>
+  <button class="nb" onclick="gp('hero',this)">🌟 Персонаж</button>
+  <button class="nb" onclick="gp('logs',this)">📋 Логи</button>
+  <button class="nb" onclick="gp('bset',this)">⚙️ Настройки</button>
 </nav>
 
-<!-- ═══════════════════════════════════════ DASHBOARD ═══ -->
+<!-- ██ DASHBOARD ██ -->
 <div id="page-dashboard" class="page active">
-
-  <div class="grid-4">
-    <div class="stat-card" style="--accent-line: var(--accent2)">
-      <div class="stat-label">Постов</div>
-      <div class="stat-value" id="stat-posts">—</div>
-      <div class="stat-delta">↑ за месяц</div>
-    </div>
-    <div class="stat-card" style="--accent-line: var(--green)">
-      <div class="stat-label">Рекламы</div>
-      <div class="stat-value" id="stat-ads">—</div>
-      <div class="stat-delta" style="color:var(--green)">активных</div>
-    </div>
-    <div class="stat-card" style="--accent-line: var(--blue)">
-      <div class="stat-label">Команда</div>
-      <div class="stat-value" id="stat-team">—</div>
-      <div class="stat-delta" style="color:var(--muted)">участников</div>
-    </div>
-    <div class="stat-card" style="--accent-line: var(--yellow)">
-      <div class="stat-label">Заявки</div>
-      <div class="stat-value" id="stat-requests">—</div>
-      <div class="stat-delta" style="color:var(--yellow)">ожидают</div>
-    </div>
+  <div class="g4">
+    <div class="stat" style="--al:var(--accent2)"><div class="sl">Постов</div><div class="sv" id="s-p">—</div><div class="ss">всего</div></div>
+    <div class="stat" style="--al:var(--green)"><div class="sl">Реклама</div><div class="sv" id="s-a">—</div><div class="ss">активных</div></div>
+    <div class="stat" style="--al:var(--blue)"><div class="sl">Команда</div><div class="sv" id="s-t">—</div><div class="ss">участников</div></div>
+    <div class="stat" style="--al:var(--yellow)"><div class="sl">Заявки</div><div class="sv" id="s-r">—</div><div class="ss">ожидают</div></div>
   </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">Публикации по дням</div>
-      <div class="chart-wrap">
-        <canvas id="chartPosts"></canvas>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Статусы постов</div>
-      <div class="chart-wrap">
-        <canvas id="chartStatus"></canvas>
-      </div>
-    </div>
+  <div class="g2">
+    <div class="card"><div class="ct">Публикации <span class="ctl"></span></div><div class="chw"><canvas id="cPosts"></canvas></div></div>
+    <div class="card"><div class="ct">Статусы <span class="ctl"></span></div><div class="chw"><canvas id="cStatus"></canvas></div></div>
   </div>
-
+  <div class="card"><div class="ct">Активность <span class="ctl"></span></div><div id="feed">—</div></div>
   <div class="card">
-    <div class="card-title">Активность</div>
-    <div id="activityFeed">
-      <div class="feed-item">
-        <div class="feed-icon">📤</div>
-        <div>
-          <div class="feed-text">Данные загружаются...</div>
-          <div class="feed-time">—</div>
-        </div>
-      </div>
-    </div>
+    <div class="ct">Рекламный ROI <span class="ctl"></span></div>
+    <div class="pr"><div class="pl">Impressions</div><div class="pw"><div class="pb" id="bI" style="background:var(--accent2)"></div></div><div class="pv" id="vI">—</div></div>
+    <div class="pr"><div class="pl">Clicks</div><div class="pw"><div class="pb" id="bC" style="background:var(--blue)"></div></div><div class="pv" id="vC">—</div></div>
+    <div class="pr"><div class="pl">CTR</div><div class="pw"><div class="pb" id="bT" style="background:var(--green)"></div></div><div class="pv" id="vT">—</div></div>
   </div>
-
-  <div class="card">
-    <div class="card-title">Рекламный ROI</div>
-    <div id="roiMetrics">
-      <div class="progress-row">
-        <div class="progress-label">Impressions</div>
-        <div class="progress-bar-wrap"><div class="progress-bar" style="width:0%;background:var(--accent2)" id="bar-imp"></div></div>
-        <div class="progress-val" id="val-imp">—</div>
-      </div>
-      <div class="progress-row">
-        <div class="progress-label">Clicks</div>
-        <div class="progress-bar-wrap"><div class="progress-bar" style="width:0%;background:var(--blue)" id="bar-clk"></div></div>
-        <div class="progress-val" id="val-clk">—</div>
-      </div>
-      <div class="progress-row">
-        <div class="progress-label">CTR</div>
-        <div class="progress-bar-wrap"><div class="progress-bar" style="width:0%;background:var(--green)" id="bar-ctr"></div></div>
-        <div class="progress-val" id="val-ctr">—</div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
-<!-- ═══════════════════════════════════════ CONTENT ═══ -->
+<!-- ██ CONTENT ██ -->
 <div id="page-content" class="page">
+  <div class="sh"><div class="stit">Контент</div><button class="btn bp bsm" onclick="om('m-post')">+ Новый пост</button></div>
+  <div class="tabs">
+    <button class="tab active" onclick="fCon('all',this)">Все</button>
+    <button class="tab" onclick="fCon('published',this)">Опубликованные</button>
+    <button class="tab" onclick="fCon('draft',this)">Черновики</button>
+    <button class="tab" onclick="fCon('scheduled',this)">Запланированные</button>
+  </div>
+  <div class="card">
+    <div class="ct">Категории <span class="ctl"></span><button class="btn bg bsm" onclick="om('m-cat')">+ Добавить</button></div>
+    <div id="catList" style="display:flex;flex-wrap:wrap;gap:6px">—</div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr><th>Пост</th><th>Статус</th><th>Дата</th><th>Действия</th></tr></thead>
+      <tbody id="conTbl"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
+    </table>
+  </div>
+</div>
 
-  <div class="section-header">
-    <div class="section-title">Контент</div>
-    <div style="display:flex;gap:8px">
-      <select id="contentFilter" onchange="renderContent()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-family:inherit;font-size:11px;cursor:pointer">
-        <option value="all">Все</option>
-        <option value="published">Опубликованные</option>
-        <option value="draft">Черновики</option>
-        <option value="scheduled">Запланированные</option>
+<!-- ██ ADS ██ -->
+<div id="page-ads" class="page">
+  <div class="sh"><div class="stit">Реклама</div><button class="btn bp bsm" onclick="om('m-ad')">+ Кампания</button></div>
+  <div class="g4">
+    <div class="stat" style="--al:var(--green)"><div class="sl">Активных</div><div class="sv" id="aAct">—</div></div>
+    <div class="stat" style="--al:var(--yellow)"><div class="sl">Ожидают</div><div class="sv" id="aPen">—</div></div>
+    <div class="stat" style="--al:var(--accent2)"><div class="sl">Бюджет</div><div class="sv" id="aBud">—</div></div>
+    <div class="stat" style="--al:var(--blue)"><div class="sl">Ср. CTR</div><div class="sv" id="aCtr">—</div></div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr><th>Кампания</th><th>Рекламодатель</th><th>Статус</th><th>CTR</th><th>Бюджет</th><th></th></tr></thead>
+      <tbody id="adsTbl"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ██ FINANCE ██ -->
+<div id="page-finance" class="page">
+  <div class="stit" style="margin-bottom:14px">Финансы</div>
+  <div class="g4">
+    <div class="stat" style="--al:var(--green)"><div class="sl">Доход</div><div class="sv" id="fInc">—</div><div class="ss" style="color:var(--green)">UAH</div></div>
+    <div class="stat" style="--al:var(--red)"><div class="sl">Расходы</div><div class="sv" id="fExp">—</div><div class="ss" style="color:var(--red)">UAH</div></div>
+    <div class="stat" style="--al:var(--accent2)"><div class="sl">Прибыль</div><div class="sv" id="fPro">—</div><div class="ss">UAH</div></div>
+    <div class="stat" style="--al:var(--blue)"><div class="sl">Кампаний</div><div class="sv" id="fCam">—</div></div>
+  </div>
+  <div class="card"><div class="ct">По рекламодателям <span class="ctl"></span></div><div id="finTbl">—</div></div>
+  <div class="card">
+    <div class="ct">Сводка <span class="ctl"></span></div>
+    <div class="fi-row"><div class="fi-lbl">Общий бюджет</div><div class="fi-val g" id="fTot">—</div></div>
+    <div class="fi-row"><div class="fi-lbl">Средний бюджет</div><div class="fi-val" id="fAvg">—</div></div>
+    <div class="fi-row"><div class="fi-lbl">Активных кампаний</div><div class="fi-val" id="fAct2">—</div></div>
+    <div class="fi-row"><div class="fi-lbl">Завершённых</div><div class="fi-val" id="fDone">—</div></div>
+  </div>
+</div>
+
+<!-- ██ TEAM ██ -->
+<div id="page-team" class="page">
+  <div class="stit" style="margin-bottom:14px">Команда</div>
+  <div id="reqBlk" style="display:none">
+    <div class="card" style="border-color:rgba(245,158,11,.3)">
+      <div class="ct" style="color:var(--yellow)">⚠ Заявки на вступление <span class="ctl"></span></div>
+      <div id="reqLst"></div>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr><th>Участник</th><th>Роль</th><th>Telegram ID</th><th>Дата</th></tr></thead>
+      <tbody id="teamTbl"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ██ HERO ██ -->
+<div id="page-hero" class="page">
+  <div class="sh"><div class="stit">Персонаж</div><button class="btn bp bsm" onclick="openEditHero()">✏️ Редактировать</button></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="poster-banner" id="hBanner">🌟</div>
+    <div style="padding:14px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px" id="hName">Загрузка...</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.6" id="hBio">—</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Биографии <span class="ctl"></span></div>
+    <div class="fi-row"><div class="fi-lbl">🇷🇺 RU</div><div style="font-size:11px;max-width:65%;text-align:right" id="hBioRu">—</div></div>
+    <div class="fi-row"><div class="fi-lbl">🇺🇦 UK</div><div style="font-size:11px;max-width:65%;text-align:right" id="hBioUk">—</div></div>
+    <div class="fi-row"><div class="fi-lbl">🇬🇧 EN</div><div style="font-size:11px;max-width:65%;text-align:right" id="hBioEn">—</div></div>
+  </div>
+  <div class="card"><div class="ct">Личность <span class="ctl"></span></div><div id="hPers" style="font-size:12px;color:var(--muted);line-height:1.7">—</div></div>
+
+  <div class="card">
+    <div class="ct">🖼 Постер над пультом <span class="ctl"></span><button class="btn bg bsm" onclick="om('m-poster')">+ Добавить</button></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Бот показывает рандомный вариант при каждом входе пользователя</div>
+    <div id="posterList">—</div>
+  </div>
+</div>
+
+<!-- ██ LOGS ██ -->
+<div id="page-logs" class="page">
+  <div class="sh"><div class="stit">Логи действий</div></div>
+  <div class="tabs">
+    <button class="tab active" onclick="fLog('all',this)">Все</button>
+    <button class="tab" onclick="fLog('publish',this)">Публикации</button>
+    <button class="tab" onclick="fLog('ban',this)">Баны</button>
+    <button class="tab" onclick="fLog('role',this)">Роли</button>
+    <button class="tab" onclick="fLog('panic',this)">Panic</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="tbl">
+      <thead><tr><th>Действие</th><th>Автор</th><th>Объект</th><th>Время</th></tr></thead>
+      <tbody id="logsTbl"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ██ BOT SETTINGS ██ -->
+<div id="page-bset" class="page">
+  <div class="stit" style="margin-bottom:14px">Настройки бота</div>
+  <div class="card">
+    <div class="ct">Основное <span class="ctl"></span></div>
+    <div class="fg"><label class="fl">Название / Username бота</label><input class="fi" id="set-bn" placeholder="@YourBot"></div>
+    <div class="fg"><label class="fl">ID канала публикаций</label><input class="fi" id="set-ch" placeholder="-1001234567890"></div>
+    <div class="fg"><label class="fl">Язык по умолчанию</label>
+      <select class="fs" id="set-lg"><option value="ru">🇷🇺 Русский</option><option value="uk">🇺🇦 Українська</option><option value="en">🇬🇧 English</option></select>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Уведомления <span class="ctl"></span></div>
+    <div class="fi-row"><div class="fi-lbl">Новые заявки</div><label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="n-req" checked><span style="font-size:11px">Включено</span></label></div>
+    <div class="fi-row"><div class="fi-lbl">Публикация поста</div><label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="n-pub" checked><span style="font-size:11px">Включено</span></label></div>
+    <div class="fi-row"><div class="fi-lbl">Новая реклама</div><label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="n-ads"><span style="font-size:11px">Включено</span></label></div>
+    <div class="fi-row"><div class="fi-lbl">Panic Mode</div><label style="cursor:pointer;display:flex;align-items:center;gap:6px"><input type="checkbox" id="n-pan" checked><span style="font-size:11px">Включено</span></label></div>
+  </div>
+  <div class="card">
+    <div class="ct">Планировщик <span class="ctl"></span></div>
+    <div class="fg"><label class="fl">Интервал проверки (мин)</label><input class="fi" id="set-int" type="number" value="1" min="1" max="60"></div>
+    <div class="fg"><label class="fl">Авто-удаление рекламы (ч)</label><input class="fi" id="set-del" type="number" value="24" min="1"></div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn bp" onclick="saveBotSettings()">💾 Сохранить настройки</button>
+    <button class="btn bd" onclick="confirmRestart()">🔄 Перезапустить бота</button>
+  </div>
+</div>
+
+<!-- ════ MODALS ════ -->
+
+<!-- New Post -->
+<div id="m-post" class="mo" style="display:none" onclick="if(event.target===this)cm('m-post')">
+<div class="mb">
+  <div class="mt">Новый пост <button class="mc" onclick="cm('m-post')">✕</button></div>
+  <div class="fg"><label class="fl">Текст RU</label><textarea class="fta" id="pt-ru" placeholder="Текст на русском..."></textarea></div>
+  <div class="fg"><label class="fl">Текст UK</label><textarea class="fta" id="pt-uk" placeholder="Текст українською..."></textarea></div>
+  <div class="fr2">
+    <div class="fg"><label class="fl">Категория</label><select class="fs" id="pt-cat"><option value="">— Без категории</option></select></div>
+    <div class="fg"><label class="fl">Статус</label>
+      <select class="fs" id="pt-st" onchange="document.getElementById('pt-sw').style.display=this.value==='scheduled'?'block':'none'">
+        <option value="draft">📝 Черновик</option>
+        <option value="scheduled">⏳ Запланировать</option>
+        <option value="published">📤 Опубликовать сейчас</option>
       </select>
     </div>
   </div>
-
-  <div class="card" style="padding:0;overflow:hidden">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Пост</th>
-          <th>Статус</th>
-          <th>Дата</th>
-        </tr>
-      </thead>
-      <tbody id="contentTable">
-        <tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr>
-      </tbody>
-    </table>
+  <div id="pt-sw" style="display:none" class="fg"><label class="fl">Дата и время</label><input class="fi" type="datetime-local" id="pt-dt"></div>
+  <div class="fa">
+    <button class="btn bp" onclick="createPost()">💾 Сохранить</button>
+    <button class="btn bg" onclick="cm('m-post')">Отмена</button>
   </div>
+</div></div>
 
+<!-- Edit Post -->
+<div id="m-edit-post" class="mo" style="display:none" onclick="if(event.target===this)cm('m-edit-post')">
+<div class="mb">
+  <div class="mt">Редактировать пост <button class="mc" onclick="cm('m-edit-post')">✕</button></div>
+  <input type="hidden" id="ep-id">
+  <div class="fg"><label class="fl">Текст RU</label><textarea class="fta" id="ep-ru"></textarea></div>
+  <div class="fg"><label class="fl">Текст UK</label><textarea class="fta" id="ep-uk"></textarea></div>
+  <div class="fr2">
+    <div class="fg"><label class="fl">Статус</label>
+      <select class="fs" id="ep-st">
+        <option value="draft">📝 Черновик</option>
+        <option value="scheduled">⏳ Запланировать</option>
+        <option value="published">📤 Опубликован</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Дата</label><input class="fi" type="datetime-local" id="ep-dt"></div>
+  </div>
+  <div class="fa">
+    <button class="btn bp" onclick="updatePost()">💾 Обновить</button>
+    <button class="btn bg" onclick="cm('m-edit-post')">Отмена</button>
+  </div>
+</div></div>
+
+<!-- Category -->
+<div id="m-cat" class="mo" style="display:none" onclick="if(event.target===this)cm('m-cat')">
+<div class="mb">
+  <div class="mt">Новая категория <button class="mc" onclick="cm('m-cat')">✕</button></div>
+  <div class="fg"><label class="fl">Название RU</label><input class="fi" id="cat-ru" placeholder="Новости"></div>
+  <div class="fg"><label class="fl">Название UK</label><input class="fi" id="cat-uk" placeholder="Новини"></div>
+  <div class="fg"><label class="fl">Иконка</label><input class="fi" id="cat-ic" placeholder="📰" maxlength="4" style="width:80px"></div>
+  <div class="fa"><button class="btn bp" onclick="createCat()">💾 Создать</button><button class="btn bg" onclick="cm('m-cat')">Отмена</button></div>
+</div></div>
+
+<!-- Ad Campaign -->
+<div id="m-ad" class="mo" style="display:none" onclick="if(event.target===this)cm('m-ad')">
+<div class="mb">
+  <div class="mt">Новая кампания <button class="mc" onclick="cm('m-ad')">✕</button></div>
+  <div class="fg"><label class="fl">Текст рекламы</label><textarea class="fta" id="ad-tx" placeholder="Рекламный текст..."></textarea></div>
+  <div class="fr2">
+    <div class="fg"><label class="fl">Рекламодатель</label><input class="fi" id="ad-adv" placeholder="Компания"></div>
+    <div class="fg"><label class="fl">Бюджет (UAH)</label><input class="fi" id="ad-bud" type="number" placeholder="1000"></div>
+  </div>
+  <div class="fr2">
+    <div class="fg"><label class="fl">Дата публикации</label><input class="fi" type="datetime-local" id="ad-pub"></div>
+    <div class="fg"><label class="fl">Удалить через</label>
+      <select class="fs" id="ad-del"><option value="0">Не удалять</option><option value="1">1 час</option><option value="6">6 часов</option><option value="24">24 часа</option><option value="72">3 дня</option></select>
+    </div>
+  </div>
+  <div class="fa"><button class="btn bp" onclick="createAd()">💾 Создать</button><button class="btn bg" onclick="cm('m-ad')">Отмена</button></div>
+</div></div>
+
+<!-- Edit Hero -->
+<div id="m-hero" class="mo" style="display:none" onclick="if(event.target===this)cm('m-hero')">
+<div class="mb">
+  <div class="mt">Редактировать персонажа <button class="mc" onclick="cm('m-hero')">✕</button></div>
+  <div class="fg"><label class="fl">Имя</label><input class="fi" id="h-nm"></div>
+  <div class="fg"><label class="fl">Биография RU</label><textarea class="fta" id="h-bru"></textarea></div>
+  <div class="fg"><label class="fl">Биография UK</label><textarea class="fta" id="h-buk"></textarea></div>
+  <div class="fg"><label class="fl">Biography EN</label><textarea class="fta" id="h-ben"></textarea></div>
+  <div class="fg"><label class="fl">Личность / Стиль общения</label><textarea class="fta" id="h-per" placeholder="Характер, манера речи, интересы..."></textarea></div>
+  <div class="fa"><button class="btn bp" onclick="saveHero()">💾 Сохранить</button><button class="btn bg" onclick="cm('m-hero')">Отмена</button></div>
+</div></div>
+
+<!-- Poster -->
+<div id="m-poster" class="mo" style="display:none" onclick="if(event.target===this)cm('m-poster')">
+<div class="mb">
+  <div class="mt">Постер над пультом <button class="mc" onclick="cm('m-poster')">✕</button></div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:14px;line-height:1.6">Каждый вариант — отдельная «открытка». Бот покажет случайную при входе.</div>
+  <div class="fg"><label class="fl">Текст (заголовок)</label><input class="fi" id="ps-tx" placeholder="Добро пожаловать в пульт!"></div>
+  <div class="fg"><label class="fl">Подзаголовок</label><input class="fi" id="ps-sb" placeholder="Создавай. Расти. Зарабатывай."></div>
+  <div class="fg"><label class="fl">Emoji / Иконка</label><input class="fi" id="ps-em" placeholder="🔥" maxlength="4" style="width:80px"></div>
+  <div class="fa"><button class="btn bp" onclick="addPoster()">+ Добавить вариант</button><button class="btn bg" onclick="cm('m-poster')">Закрыть</button></div>
+</div></div>
+
+<!-- Setup -->
+<div id="setupOv" class="setup-ov" style="display:none">
+<div class="setup-box">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;background:linear-gradient(135deg,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">OMNI-CONTROL</div>
+  <div style="font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:20px">ПОДКЛЮЧЕНИЕ К API</div>
+  <div class="fg"><label class="fl">IP сервера</label><input class="fi" id="su" placeholder="http://123.45.67.89"></div>
+  <div class="fg"><label class="fl">API Secret Key</label><input class="fi" id="sk" placeholder="из .env файла" type="password"></div>
+  <button class="btn bp" style="width:100%;margin-bottom:10px" onclick="saveConfig()">🔌 ПОДКЛЮЧИТЬ</button>
+  <button class="btn bg" style="width:100%;font-size:10px" onclick="demoMode()">👁 ДЕМО — работать без API</button>
+  <div id="se" style="color:var(--red);font-size:11px;margin-top:10px;text-align:center;display:none"></div>
 </div>
-
-<!-- ═══════════════════════════════════════ ADS ═══ -->
-<div id="page-ads" class="page">
-
-  <div class="section-header">
-    <div class="section-title">Реклама</div>
-  </div>
-
-  <div class="grid-4">
-    <div class="stat-card" style="--accent-line:var(--green)">
-      <div class="stat-label">Активных</div>
-      <div class="stat-value" id="ads-active">—</div>
-    </div>
-    <div class="stat-card" style="--accent-line:var(--yellow)">
-      <div class="stat-label">Ожидают</div>
-      <div class="stat-value" id="ads-pending">—</div>
-    </div>
-    <div class="stat-card" style="--accent-line:var(--accent2)">
-      <div class="stat-label">Бюджет</div>
-      <div class="stat-value" id="ads-budget">—</div>
-    </div>
-    <div class="stat-card" style="--accent-line:var(--blue)">
-      <div class="stat-label">Ср. CTR</div>
-      <div class="stat-value" id="ads-ctr">—</div>
-    </div>
-  </div>
-
-  <div class="card" style="padding:0;overflow:hidden">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Кампания</th>
-          <th>Статус</th>
-          <th>CTR</th>
-          <th>Бюджет</th>
-        </tr>
-      </thead>
-      <tbody id="adsTable">
-        <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-</div>
-
-<!-- ═══════════════════════════════════════ TEAM ═══ -->
-<div id="page-team" class="page">
-
-  <div class="section-header">
-    <div class="section-title">Команда</div>
-  </div>
-
-  <div id="joinRequestsBlock" style="display:none">
-    <div class="card" style="border-color:rgba(245,158,11,0.3)">
-      <div class="card-title" style="color:var(--yellow)">⚠ Заявки на вступление</div>
-      <div id="requestsList"></div>
-    </div>
-  </div>
-
-  <div class="card" style="padding:0;overflow:hidden">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Участник</th>
-          <th>Роль</th>
-          <th>Дата</th>
-        </tr>
-      </thead>
-      <tbody id="teamTable">
-        <tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">Загрузка...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-</div>
-
-<!-- ═══════════════════════════════════════ HERO ═══ -->
-<div id="page-hero" class="page">
-
-  <div class="section-header">
-    <div class="section-title">Персонаж</div>
-  </div>
-
-  <div id="heroBlock">
-    <div class="hero-card">
-      <div class="hero-banner">
-        <div class="hero-avatar-lg" id="heroEmoji">🌟</div>
-      </div>
-      <div class="hero-info">
-        <div class="hero-name" id="heroName">Загрузка...</div>
-        <div class="hero-bio" id="heroBio">—</div>
-        <div style="margin-top:12px;display:flex;gap:8px">
-          <button class="btn btn-primary" style="font-size:10px;padding:6px 12px">✏️ Редактировать</button>
-          <button class="btn btn-ghost" style="font-size:10px;padding:6px 12px">🖼 Сменить фото</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Личность & Стиль</div>
-      <div id="heroPersonality" style="font-size:12px;color:var(--muted);line-height:1.7">
-        Данные не заданы. Перейди в бот → Персонаж → Личность.
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Биографии</div>
-      <div class="metric-row">
-        <div class="metric-name">🇷🇺 Русский</div>
-        <div class="metric-val" style="font-size:11px" id="heroBioRu">—</div>
-      </div>
-      <div class="metric-row">
-        <div class="metric-name">🇺🇦 Украинский</div>
-        <div class="metric-val" style="font-size:11px" id="heroBioUk">—</div>
-      </div>
-      <div class="metric-row">
-        <div class="metric-name">🇬🇧 English</div>
-        <div class="metric-val" style="font-size:11px" id="heroBioEn">—</div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════════
-// MOCK DATA — заменить на реальный API когда будет бэкенд
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let DEMO = false;
+const CFG = {
+  get url(){ return localStorage.getItem('omni_url')||''; },
+  get key(){ return localStorage.getItem('omni_key')||''; },
+};
 
 const MOCK = {
-  stats: { posts: 24, ads: 3, team: 6, requests: 2 },
-  posts: [
-    { id: 1, text: "Новый пост о маркетинге...", status: "published", date: "26.02.2026" },
-    { id: 2, text: "Анонс нового продукта...", status: "draft",     date: "25.02.2026" },
-    { id: 3, text: "Тренды SMM 2026...",        status: "scheduled", date: "27.02.2026" },
-    { id: 4, text: "Кейс роста аудитории...",   status: "published", date: "24.02.2026" },
-    { id: 5, text: "Советы по контенту...",     status: "draft",     date: "23.02.2026" },
+  stats:{posts:24,ads:3,team:6,requests:2},
+  posts:[
+    {id:1,text_ru:"Новый пост о маркетинге и трендах 2026",status:"published",created_at:"26.02.2026"},
+    {id:2,text_ru:"Анонс нового продукта для аудитории",status:"draft",created_at:"25.02.2026"},
+    {id:3,text_ru:"Тренды SMM 2026 — что работает сейчас",status:"scheduled",created_at:"27.02.2026"},
+    {id:4,text_ru:"Кейс роста аудитории с нуля до 50к",status:"published",created_at:"24.02.2026"},
+    {id:5,text_ru:"7 ошибок начинающего контент-мейкера",status:"draft",created_at:"23.02.2026"},
   ],
-  ads: [
-    { id: 1, text: "Реклама продукта X",   status: "active",   ctr: "4.2%", budget: "500 UAH" },
-    { id: 2, text: "Промо акция февраль",  status: "pending",  ctr: "—",    budget: "1200 UAH" },
-    { id: 3, text: "Партнёрский пост",     status: "cancelled",ctr: "1.8%", budget: "300 UAH" },
+  cats:[{id:1,name_ru:"Новости",icon:"📰"},{id:2,name_ru:"Маркетинг",icon:"📈"},{id:3,name_ru:"Кейсы",icon:"💡"}],
+  ads:[
+    {id:1,text:"Реклама продукта X — узнай больше",advertiser:"ООО Рога и Копыта",status:"active",ctr:"4.2%",budget:"500 UAH"},
+    {id:2,text:"Промо акция февраль — скидки до 50%",advertiser:"ИП Примаков",status:"pending",ctr:"—",budget:"1200 UAH"},
+    {id:3,text:"Партнёрский пост — спонсор выпуска",advertiser:"ЧП Старт",status:"cancelled",ctr:"1.8%",budget:"300 UAH"},
   ],
-  team: [
-    { id: 1, name: "Владелец",    role: "owner",  date: "01.01.2026" },
-    { id: 2, name: "Андрей А.",   role: "admin",  date: "10.01.2026" },
-    { id: 3, name: "Мария К.",    role: "editor", date: "15.02.2026" },
+  team:[
+    {id:103920773,name:"Goulash1986",role:"owner",date:"01.01.2026"},
+    {id:2,name:"Андрей А.",role:"admin",date:"10.01.2026"},
+    {id:3,name:"Мария К.",role:"editor",date:"15.02.2026"},
   ],
-  requests: [
-    { id: 1, name: "Иван П.",    msg: "Хочу помогать с контентом" },
-    { id: 2, name: "Анна С.",    msg: "SMM-специалист, 3 года опыта" },
+  requests:[
+    {id:1,name:"Иван П.",msg:"Хочу помогать с контентом"},
+    {id:2,name:"Анна С.",msg:"SMM-специалист, 3 года опыта"},
   ],
-  hero: {
-    name: "АЛИНЫЧ АНДРЕЕВИЧ",
-    bio: "Эксперт в digital-маркетинге и SMM. Помогаю брендам расти.",
-    bio_ru: "Эксперт в digital-маркетинге и SMM.",
-    bio_uk: "Експерт з digital-маркетингу та SMM.",
-    bio_en: "Digital marketing & SMM expert.",
-    personality: "Энергичный, говорит на ты, любит юмор и конкретику. Эксперт в SMM, не терпит воды в текстах.",
-  },
-  roi: { impressions: 12400, clicks: 520, ctr: 4.2 },
-  activity: [
-    { icon: "📤", text: "Пост #4 опубликован в канал", time: "сегодня 14:22" },
-    { icon: "✅", text: "Заявка Ивана П. одобрена", time: "сегодня 12:10" },
-    { icon: "💼", text: "Реклама #1 активирована", time: "вчера 18:45" },
-    { icon: "✏️", text: "Пост #2 создан как черновик", time: "вчера 11:30" },
-    { icon: "🚨", text: "PANIC MODE активирован", time: "23.02 09:15" },
+  hero:{exists:true,name:"АЛИНЫЧ АНДРЕЕВИЧ",bio:"Эксперт в digital-маркетинге и SMM.",bio_ru:"Эксперт в digital-маркетинге и SMM.",bio_uk:"Експерт з digital-маркетингу та SMM.",bio_en:"Digital marketing & SMM expert.",personality:"Энергичный, говорит на ты. Любит конкретику и юмор. Не терпит воды в текстах."},
+  roi:{impressions:12400,clicks:520,ctr:4.2},
+  activity:[
+    {icon:"📤",text:"Пост #4 опубликован в канал",time:"сегодня 14:22"},
+    {icon:"✅",text:"Заявка Ивана П. одобрена",time:"сегодня 12:10"},
+    {icon:"💼",text:"Реклама #1 активирована",time:"вчера 18:45"},
+    {icon:"🚨",text:"PANIC MODE активирован",time:"23.02 09:15"},
+  ],
+  logs:[
+    {action:"publish_post",author:"Goulash1986",entity:"Пост #4",time:"26.02 14:22"},
+    {action:"ban_user",author:"Goulash1986",entity:"User #99",time:"26.02 12:10"},
+    {action:"change_role",author:"Goulash1986",entity:"Мария К. → Editor",time:"25.02 18:45"},
+    {action:"approve_join_request",author:"Goulash1986",entity:"Иван П.",time:"25.02 11:30"},
+    {action:"panic_mode",author:"Goulash1986",entity:"Система",time:"23.02 09:15"},
+  ],
+  posters:[
+    {emoji:"🔥",title:"Добро пожаловать!",sub:"Создавай контент. Расти. Зарабатывай."},
+    {emoji:"💡",title:"Пульт управления",sub:"Всё под контролем. Ты — Алиныч Андреевич."},
   ]
 };
 
-// ══════════════════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════════════════
-
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  event.currentTarget.classList.add('active');
-
-  // Lazy render
-  const renders = { content: renderContent, ads: renderAds, team: renderTeam, hero: renderHero };
-  if (renders[id]) renders[id]();
-}
-
-// ══════════════════════════════════════════════════════════
-// DASHBOARD
-// ══════════════════════════════════════════════════════════
-
-function initDashboard() {
-  const d = MOCK;
-
-  // Stats
-  animateNumber('stat-posts',    d.stats.posts);
-  animateNumber('stat-ads',      d.stats.ads);
-  animateNumber('stat-team',     d.stats.team);
-  animateNumber('stat-requests', d.stats.requests);
-
-  document.getElementById('reqBadge').textContent = d.stats.requests;
-
-  // Activity feed
-  const feed = document.getElementById('activityFeed');
-  feed.innerHTML = d.activity.map(a => `
-    <div class="feed-item">
-      <div class="feed-icon">${a.icon}</div>
-      <div>
-        <div class="feed-text">${a.text}</div>
-        <div class="feed-time">${a.time}</div>
-      </div>
-    </div>
-  `).join('');
-
-  // ROI
-  const maxImp = d.roi.impressions;
-  setTimeout(() => {
-    document.getElementById('bar-imp').style.width = '100%';
-    document.getElementById('bar-clk').style.width = (d.roi.clicks / maxImp * 100) + '%';
-    document.getElementById('bar-ctr').style.width = (d.roi.ctr / 10 * 100) + '%';
-  }, 100);
-  document.getElementById('val-imp').textContent = d.roi.impressions.toLocaleString();
-  document.getElementById('val-clk').textContent = d.roi.clicks.toLocaleString();
-  document.getElementById('val-ctr').textContent = d.roi.ctr + '%';
-
-  // Charts
-  const ctx1 = document.getElementById('chartPosts').getContext('2d');
-  new Chart(ctx1, {
-    type: 'bar',
-    data: {
-      labels: ['21', '22', '23', '24', '25', '26'],
-      datasets: [{
-        data: [2, 1, 3, 2, 4, 1],
-        backgroundColor: 'rgba(124,58,237,0.5)',
-        borderColor: 'rgba(168,85,247,0.8)',
-        borderWidth: 1,
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: 'rgba(42,42,58,0.5)' }, ticks: { color: '#64748b', font: { size: 10 } } },
-        y: { grid: { color: 'rgba(42,42,58,0.5)' }, ticks: { color: '#64748b', font: { size: 10 }, stepSize: 1 } }
-      }
-    }
-  });
-
-  const ctx2 = document.getElementById('chartStatus').getContext('2d');
-  new Chart(ctx2, {
-    type: 'doughnut',
-    data: {
-      labels: ['Опубликовано', 'Черновики', 'Запланировано'],
-      datasets: [{
-        data: [14, 7, 3],
-        backgroundColor: ['rgba(16,185,129,0.7)', 'rgba(100,116,139,0.5)', 'rgba(245,158,11,0.7)'],
-        borderColor: ['#10b981', '#475569', '#f59e0b'],
-        borderWidth: 1,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom', labels: { color: '#64748b', font: { size: 10 }, padding: 10 } }
-      },
-      cutout: '65%'
-    }
-  });
-}
-
-function animateNumber(id, target) {
-  const el = document.getElementById(id);
-  let current = 0;
-  const step = Math.ceil(target / 20);
-  const timer = setInterval(() => {
-    current = Math.min(current + step, target);
-    el.textContent = current;
-    if (current >= target) clearInterval(timer);
-  }, 50);
-}
-
-// ══════════════════════════════════════════════════════════
-// CONTENT
-// ══════════════════════════════════════════════════════════
-
-function renderContent() {
-  const filter = document.getElementById('contentFilter').value;
-  const posts = filter === 'all' ? MOCK.posts : MOCK.posts.filter(p => p.status === filter);
-  const statusLabels = { published: 'Опубликован', draft: 'Черновик', scheduled: 'Запланирован' };
-  const tbody = document.getElementById('contentTable');
-  if (!posts.length) {
-    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:24px">Нет постов</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = posts.map(p => `
-    <tr>
-      <td>
-        <div style="font-size:12px;font-weight:600">#${p.id}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">${p.text}</div>
-      </td>
-      <td><span class="status ${p.status}"><span class="status-dot-sm" style="background:currentColor;border-radius:50%"></span>${statusLabels[p.status]}</span></td>
-      <td style="color:var(--muted);font-size:11px">${p.date}</td>
-    </tr>
-  `).join('');
-}
-
-// ══════════════════════════════════════════════════════════
-// ADS
-// ══════════════════════════════════════════════════════════
-
-function renderAds() {
-  const ads = MOCK.ads;
-  const active = ads.filter(a => a.status === 'active').length;
-  const pending = ads.filter(a => a.status === 'pending').length;
-  const budget = ads.reduce((s, a) => s + parseInt(a.budget || 0), 0);
-
-  document.getElementById('ads-active').textContent  = active;
-  document.getElementById('ads-pending').textContent = pending;
-  document.getElementById('ads-budget').textContent  = budget || '—';
-  document.getElementById('ads-ctr').textContent     = '4.2%';
-
-  const statusLabels = { active: 'Активна', pending: 'Ожидает', cancelled: 'Отменена' };
-  document.getElementById('adsTable').innerHTML = ads.map(a => `
-    <tr>
-      <td>
-        <div style="font-size:12px;font-weight:600">#${a.id}</div>
-        <div style="font-size:11px;color:var(--muted)">${a.text}</div>
-      </td>
-      <td><span class="status ${a.status}">${statusLabels[a.status]}</span></td>
-      <td style="font-size:12px">${a.ctr}</td>
-      <td style="font-size:12px;color:var(--muted)">${a.budget}</td>
-    </tr>
-  `).join('');
-}
-
-// ══════════════════════════════════════════════════════════
-// TEAM
-// ══════════════════════════════════════════════════════════
-
-function renderTeam() {
-  const reqs = MOCK.requests;
-  if (reqs.length > 0) {
-    document.getElementById('joinRequestsBlock').style.display = 'block';
-    document.getElementById('requestsList').innerHTML = reqs.map(r => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div>
-          <div style="font-size:12px;font-weight:600">${r.name}</div>
-          <div style="font-size:11px;color:var(--muted)">${r.msg}</div>
-        </div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-primary" style="font-size:10px;padding:4px 10px">✅</button>
-          <button class="btn btn-danger" style="font-size:10px;padding:4px 10px">❌</button>
-        </div>
-      </div>
-    `).join('');
-  }
-
-  const roleLabels = { owner: 'Owner', admin: 'Admin', editor: 'Editor' };
-  document.getElementById('teamTable').innerHTML = MOCK.team.map(u => `
-    <tr>
-      <td>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="avatar">${u.name[0]}</div>
-          <div style="font-size:12px">${u.name}</div>
-        </div>
-      </td>
-      <td><span class="role ${u.role}">${roleLabels[u.role]}</span></td>
-      <td style="color:var(--muted);font-size:11px">${u.date}</td>
-    </tr>
-  `).join('');
-}
-
-// ══════════════════════════════════════════════════════════
-// HERO
-// ══════════════════════════════════════════════════════════
-
-function renderHero() {
-  const h = MOCK.hero;
-  document.getElementById('heroName').textContent        = h.name;
-  document.getElementById('heroBio').textContent         = h.bio;
-  document.getElementById('heroBioRu').textContent       = h.bio_ru;
-  document.getElementById('heroBioUk').textContent       = h.bio_uk;
-  document.getElementById('heroBioEn').textContent       = h.bio_en;
-  document.getElementById('heroPersonality').textContent = h.personality;
-}
-
-// ══════════════════════════════════════════════════════════
-// TELEGRAM WEB APP INIT
-// ══════════════════════════════════════════════════════════
-
-if (window.Telegram && window.Telegram.WebApp) {
-  const tg = window.Telegram.WebApp;
-  tg.expand();
-  tg.setHeaderColor('#0a0a0f');
-  tg.setBackgroundColor('#0a0a0f');
-  document.documentElement.style.setProperty('--tg-color', tg.themeParams?.button_color || '#7c3aed');
-}
-
-// ══════════════════════════════════════════════════════════
+// ════════════════════════════════════════
 // INIT
-// ══════════════════════════════════════════════════════════
-
+// ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  initDashboard();
-  renderContent();
+  if (!CFG.url || !CFG.key) {
+    document.getElementById('setupOv').style.display = 'flex';
+  } else {
+    loadAll();
+  }
 });
+
+function loadAll() {
+  loadDashboard();
+  loadContent();
+  loadCats();
+}
+
+// ════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════
+function gp(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  const map={content:()=>{loadContent();loadCats();},ads:loadAds,finance:loadFinance,team:loadTeam,hero:loadHero,logs:()=>loadLogs('all')};
+  if(map[id]) map[id]();
+}
+
+// ════════════════════════════════════════
+// API FETCH
+// ════════════════════════════════════════
+async function apiFetch(path, method='GET', body=null) {
+  const opts = {method, headers:{'X-Api-Key':CFG.key,'Content-Type':'application/json'}};
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(CFG.url+path, opts);
+  if (!r.ok) throw new Error('API '+r.status);
+  return r.json();
+}
+
+// ════════════════════════════════════════
+// DASHBOARD
+// ════════════════════════════════════════
+async function loadDashboard() {
+  let d;
+  if (DEMO) {
+    d = {stats:MOCK.stats, posts_by_day:[{date:'21',count:2},{date:'22',count:1},{date:'23',count:3},{date:'24',count:2},{date:'25',count:4},{date:'26',count:1}], post_statuses:{published:14,drafts:7,scheduled:3}, roi:MOCK.roi, activity:MOCK.activity};
+  } else { try{d=await apiFetch('/api/dashboard');}catch(e){return;} }
+
+  cnt('s-p',d.stats.posts); cnt('s-a',d.stats.ads); cnt('s-t',d.stats.team); cnt('s-r',d.stats.requests);
+  document.getElementById('rBdg').textContent = d.stats.requests;
+
+  g('feed').innerHTML = d.activity.map(a=>
+    `<div class="feed-item"><div class="feed-ic">${a.icon}</div><div><div style="font-size:12px">${a.text}</div><div style="font-size:10px;color:var(--muted);margin-top:2px">${a.time}</div></div></div>`
+  ).join('');
+
+  const roi=d.roi;
+  setTimeout(()=>{bw('bI',100);bw('bC',roi.impressions?roi.clicks/roi.impressions*100:0);bw('bT',roi.ctr/10*100);},100);
+  g('vI').textContent=(roi.impressions||0).toLocaleString();
+  g('vC').textContent=(roi.clicks||0).toLocaleString();
+  g('vT').textContent=roi.ctr+'%';
+
+  drawBar('cPosts', d.posts_by_day.map(x=>x.date), d.posts_by_day.map(x=>x.count));
+  const s=d.post_statuses;
+  drawDonut('cStatus',['Опубликовано','Черновики','Запланировано'],[s.published,s.drafts,s.scheduled]);
+}
+
+function drawBar(id,labels,data){
+  const ctx=g(id)?.getContext('2d'); if(!ctx)return;
+  if(window['_c'+id])window['_c'+id].destroy();
+  window['_c'+id]=new Chart(ctx,{type:'bar',data:{labels,datasets:[{data,backgroundColor:'rgba(124,58,237,.5)',borderColor:'rgba(168,85,247,.8)',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(42,42,58,.5)'},ticks:{color:'#64748b',font:{size:10}}},y:{grid:{color:'rgba(42,42,58,.5)'},ticks:{color:'#64748b',font:{size:10},stepSize:1}}}}});
+}
+function drawDonut(id,labels,data){
+  const ctx=g(id)?.getContext('2d'); if(!ctx)return;
+  if(window['_c'+id])window['_c'+id].destroy();
+  window['_c'+id]=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:['rgba(16,185,129,.7)','rgba(100,116,139,.5)','rgba(245,158,11,.7)'],borderColor:['#10b981','#475569','#f59e0b'],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#64748b',font:{size:10},padding:10}}},cutout:'65%'}});
+}
+
+// ════════════════════════════════════════
+// CONTENT
+// ════════════════════════════════════════
+let _cf='all';
+
+async function loadContent() {
+  let posts;
+  if(DEMO){posts=MOCK.posts;}
+  else{try{const d=await apiFetch(`/api/posts?status=${_cf}`);posts=d.posts;}catch(e){return;}}
+
+  const fl=_cf==='all'?posts:posts.filter(p=>p.status===_cf);
+  const sc={published:'st-pub',draft:'st-drf',scheduled:'st-sch',deleted:'st-del'};
+  const st={published:'Опубликован',draft:'Черновик',scheduled:'Запланирован',deleted:'Удалён'};
+  g('conTbl').innerHTML=fl.length?fl.map(p=>`
+    <tr>
+      <td><div style="font-size:12px;font-weight:600">#${p.id}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${(p.text_ru||p.text||'').substring(0,60)}</div></td>
+      <td><span class="st ${sc[p.status]||'st-drf'}">${st[p.status]||p.status}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${p.created_at}</td>
+      <td><div style="display:flex;gap:6px">
+        <button class="btn bg bsm" onclick="editPost(${p.id})">✏️</button>
+        <button class="btn bd bsm" onclick="delPost(${p.id})">🗑</button>
+      </div></td>
+    </tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Нет постов</td></tr>';
+}
+
+async function loadCats() {
+  let cats;
+  if(DEMO){cats=MOCK.cats;}
+  else{try{const d=await apiFetch('/api/categories');cats=d.categories;}catch(e){cats=[];}}
+  g('catList').innerHTML=cats.length?cats.map(c=>
+    `<div style="display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px">${c.icon||'📁'} ${c.name_ru} <button onclick="delCat(${c.id})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;margin-left:4px">✕</button></div>`
+  ).join(''):'<span style="font-size:11px;color:var(--muted)">Нет категорий</span>';
+  const sel=g('pt-cat');
+  if(sel) sel.innerHTML='<option value="">— Без категории</option>'+cats.map(c=>`<option value="${c.id}">${c.icon||''} ${c.name_ru}</option>`).join('');
+}
+
+function fCon(f,btn){
+  _cf=f;
+  document.querySelectorAll('#page-content .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  loadContent();
+}
+
+async function createPost(){
+  const data={text_ru:g('pt-ru').value,text_uk:g('pt-uk').value,category_id:g('pt-cat').value||null,status:g('pt-st').value,schedule_at:g('pt-dt').value||null};
+  if(!data.text_ru&&!data.text_uk){alert('Введите текст');return;}
+  if(DEMO){MOCK.posts.unshift({id:Date.now(),text_ru:data.text_ru||data.text_uk,status:data.status,created_at:new Date().toLocaleDateString('ru')});}
+  else{try{await apiFetch('/api/posts','POST',data);}catch(e){alert('Ошибка: '+e.message);return;}}
+  cm('m-post'); g('pt-ru').value=''; g('pt-uk').value=''; loadContent();
+}
+
+function editPost(id){
+  const p=MOCK.posts.find(x=>x.id===id)||{id,text_ru:'',text_uk:'',status:'draft'};
+  g('ep-id').value=id; g('ep-ru').value=p.text_ru||''; g('ep-uk').value=p.text_uk||''; g('ep-st').value=p.status||'draft';
+  om('m-edit-post');
+}
+
+async function updatePost(){
+  const id=parseInt(g('ep-id').value);
+  const data={text_ru:g('ep-ru').value,text_uk:g('ep-uk').value,status:g('ep-st').value,schedule_at:g('ep-dt').value||null};
+  if(DEMO){const p=MOCK.posts.find(x=>x.id===id);if(p){p.text_ru=data.text_ru;p.status=data.status;}}
+  else{try{await apiFetch('/api/posts/'+id,'PUT',data);}catch(e){alert('Ошибка');return;}}
+  cm('m-edit-post'); loadContent();
+}
+
+async function delPost(id){
+  if(!confirm('Удалить пост #'+id+'?'))return;
+  if(DEMO){MOCK.posts=MOCK.posts.filter(p=>p.id!==id);}
+  else{try{await apiFetch('/api/posts/'+id,'DELETE');}catch(e){alert('Ошибка');return;}}
+  loadContent();
+}
+
+async function createCat(){
+  const data={name_ru:g('cat-ru').value,name_uk:g('cat-uk').value,icon:g('cat-ic').value};
+  if(!data.name_ru){alert('Введите название');return;}
+  if(DEMO){MOCK.cats.push({id:Date.now(),name_ru:data.name_ru,icon:data.icon});}
+  else{try{await apiFetch('/api/categories','POST',data);}catch(e){alert('Ошибка');return;}}
+  cm('m-cat'); g('cat-ru').value=''; g('cat-uk').value=''; g('cat-ic').value=''; loadCats();
+}
+
+async function delCat(id){
+  if(DEMO){MOCK.cats=MOCK.cats.filter(c=>c.id!==id);loadCats();return;}
+  try{await apiFetch('/api/categories/'+id,'DELETE');loadCats();}catch(e){alert('Ошибка');}
+}
+
+// ════════════════════════════════════════
+// ADS
+// ════════════════════════════════════════
+async function loadAds(){
+  let d;
+  if(DEMO){d={stats:{active:1,pending:1,budget:'2000',ctr:'4.2%'},ads:MOCK.ads};}
+  else{try{d=await apiFetch('/api/ads');}catch(e){return;}}
+  g('aAct').textContent=d.stats.active; g('aPen').textContent=d.stats.pending;
+  g('aBud').textContent=d.stats.budget||'—'; g('aCtr').textContent=d.stats.ctr;
+  const sc={active:'st-act',pending:'st-pen',cancelled:'st-can',completed:'st-pub'};
+  const st={active:'Активна',pending:'Ожидает',cancelled:'Отменена',completed:'Завершена'};
+  g('adsTbl').innerHTML=d.ads.map(a=>`
+    <tr>
+      <td><div style="font-size:11px;font-weight:600">#${a.id}</div><div style="font-size:11px;color:var(--muted)">${a.text.substring(0,45)}</div></td>
+      <td style="font-size:11px;color:var(--muted)">${a.advertiser||'—'}</td>
+      <td><span class="st ${sc[a.status]||'st-drf'}">${st[a.status]||a.status}</span></td>
+      <td style="font-size:12px">${a.ctr}</td>
+      <td style="font-size:11px;color:var(--muted)">${a.budget}</td>
+      <td><div style="display:flex;gap:5px">
+        ${a.status==='pending'?`<button class="btn bsuc bsm" onclick="activateAd(${a.id})">▶</button>`:''}
+        <button class="btn bd bsm" onclick="delAd(${a.id})">🗑</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+async function createAd(){
+  const data={text:g('ad-tx').value,advertiser:g('ad-adv').value,budget:g('ad-bud').value,publish_at:g('ad-pub').value,delete_after:g('ad-del').value};
+  if(!data.text){alert('Введите текст');return;}
+  if(DEMO){MOCK.ads.unshift({id:Date.now(),text:data.text,advertiser:data.advertiser,status:'pending',ctr:'—',budget:(data.budget||'0')+' UAH'});}
+  else{try{await apiFetch('/api/ads','POST',data);}catch(e){alert('Ошибка');return;}}
+  cm('m-ad'); g('ad-tx').value=''; loadAds();
+}
+
+async function activateAd(id){
+  if(DEMO){const a=MOCK.ads.find(x=>x.id===id);if(a)a.status='active';}
+  else{try{await apiFetch('/api/ads/'+id+'/activate','POST');}catch(e){alert('Ошибка');return;}}
+  loadAds();
+}
+
+async function delAd(id){
+  if(!confirm('Удалить кампанию #'+id+'?'))return;
+  if(DEMO){MOCK.ads=MOCK.ads.filter(a=>a.id!==id);}
+  else{try{await apiFetch('/api/ads/'+id,'DELETE');}catch(e){alert('Ошибка');return;}}
+  loadAds();
+}
+
+// ════════════════════════════════════════
+// FINANCE
+// ════════════════════════════════════════
+async function loadFinance(){
+  let d;
+  if(DEMO){
+    const adv=[{name:'ООО Рога и Копыта',budget:500,campaigns:1},{name:'ИП Примаков',budget:1200,campaigns:1},{name:'ЧП Старт',budget:300,campaigns:1}];
+    d={income:2000,expense:200,profit:1800,campaigns:3,total_budget:2000,avg_budget:667,done_campaigns:1,advertisers:adv};
+  } else{try{d=await apiFetch('/api/finance');}catch(e){return;}}
+  cnt('fInc',d.income||0); cnt('fExp',d.expense||0); cnt('fPro',d.profit||0); cnt('fCam',d.campaigns||0);
+  g('fTot').textContent=(d.total_budget||0)+' UAH';
+  g('fAvg').textContent=Math.round(d.avg_budget||0)+' UAH';
+  g('fAct2').textContent=d.campaigns||0;
+  g('fDone').textContent=d.done_campaigns||0;
+  g('finTbl').innerHTML=(d.advertisers||[]).length?`<table class="tbl"><thead><tr><th>Рекламодатель</th><th>Бюджет</th><th>Кампаний</th></tr></thead><tbody>${(d.advertisers||[]).map(a=>`<tr><td style="font-size:12px">${a.name}</td><td style="color:var(--green);font-size:12px">${a.budget} UAH</td><td>${a.campaigns}</td></tr>`).join('')}</tbody></table>`:'<div style="color:var(--muted);font-size:12px">Нет данных</div>';
+}
+
+// ════════════════════════════════════════
+// TEAM
+// ════════════════════════════════════════
+async function loadTeam(){
+  let d;
+  if(DEMO){d={members:MOCK.team,requests:MOCK.requests};}
+  else{try{d=await apiFetch('/api/team');}catch(e){return;}}
+  if(d.requests?.length){
+    g('reqBlk').style.display='block';
+    g('reqLst').innerHTML=d.requests.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:12px;font-weight:600">${r.name}</div><div style="font-size:11px;color:var(--muted)">${r.msg}</div></div><div style="font-size:10px;color:var(--muted)">Одобрить в боте →</div></div>`).join('');
+  } else g('reqBlk').style.display='none';
+  const rc={owner:'rl-o',admin:'rl-a',editor:'rl-e'};
+  const rt={owner:'Owner',admin:'Admin',editor:'Editor',analyst:'Analyst'};
+  g('teamTbl').innerHTML=d.members.map(u=>`<tr><td><div style="display:flex;align-items:center;gap:10px"><div class="av">${(u.name||'?')[0]}</div><div style="font-size:12px">${u.name}</div></div></td><td><span class="rl ${rc[u.role]||''}">${rt[u.role]||u.role}</span></td><td style="font-size:11px;color:var(--muted)"><code>${u.id}</code></td><td style="font-size:11px;color:var(--muted)">${u.date}</td></tr>`).join('');
+}
+
+// ════════════════════════════════════════
+// HERO
+// ════════════════════════════════════════
+async function loadHero(){
+  let h;
+  if(DEMO){h=MOCK.hero;}
+  else{try{h=await apiFetch('/api/hero');}catch(e){return;}}
+  if(!h.exists){g('hName').textContent='Персонаж не создан';g('hBio').textContent='Создайте в боте';return;}
+  g('hName').textContent=h.name; g('hBio').textContent=h.bio;
+  g('hBioRu').textContent=h.bio_ru; g('hBioUk').textContent=h.bio_uk; g('hBioEn').textContent=h.bio_en;
+  g('hPers').textContent=h.personality||'—';
+  renderPosters();
+}
+
+function openEditHero(){
+  const h=MOCK.hero;
+  g('h-nm').value=h.name||''; g('h-bru').value=h.bio_ru||''; g('h-buk').value=h.bio_uk||'';
+  g('h-ben').value=h.bio_en||''; g('h-per').value=h.personality||'';
+  om('m-hero');
+}
+
+async function saveHero(){
+  const data={name:g('h-nm').value,bio_ru:g('h-bru').value,bio_uk:g('h-buk').value,bio_en:g('h-ben').value,personality:g('h-per').value};
+  if(DEMO){Object.assign(MOCK.hero,data);MOCK.hero.bio=data.bio_ru;}
+  else{try{await apiFetch('/api/hero','PUT',data);}catch(e){alert('Ошибка: '+e.message);return;}}
+  cm('m-hero'); loadHero();
+}
+
+function renderPosters(){
+  const p=MOCK.posters;
+  g('posterList').innerHTML=p.length?p.map((x,i)=>`
+    <div style="display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px">
+      <span style="font-size:26px">${x.emoji}</span>
+      <div style="flex:1"><div style="font-size:12px;font-weight:600">${x.title}</div><div style="font-size:11px;color:var(--muted);margin-top:2px">${x.sub}</div></div>
+      <button onclick="delPoster(${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button>
+    </div>`).join(''):'<div style="color:var(--muted);font-size:11px">Нет вариантов. Добавь первый!</div>';
+}
+
+function addPoster(){
+  const text=g('ps-tx').value, sub=g('ps-sb').value, emoji=g('ps-em').value||'🔥';
+  if(!text){alert('Введите текст');return;}
+  MOCK.posters.push({emoji,title:text,sub:sub});
+  g('ps-tx').value=''; g('ps-sb').value=''; g('ps-em').value='';
+  renderPosters();
+}
+
+function delPoster(i){MOCK.posters.splice(i,1);renderPosters();}
+
+// ════════════════════════════════════════
+// LOGS
+// ════════════════════════════════════════
+async function loadLogs(f){
+  let logs;
+  if(DEMO){logs=MOCK.logs;}
+  else{try{const d=await apiFetch(`/api/logs?filter=${f}`);logs=d.logs;}catch(e){return;}}
+  const al={publish_post:"📤 Публикация",ban_user:"🚫 Бан",unban_user:"✅ Разбан",change_role:"🔄 Смена роли",approve_join_request:"✅ Заявка одобрена",reject_join_request:"❌ Заявка отклонена",panic_mode:"🚨 Panic Mode",delete_post:"🗑 Удаление"};
+  g('logsTbl').innerHTML=logs.length?logs.map(l=>`<tr><td style="font-size:12px">${al[l.action]||l.action}</td><td style="font-size:11px;color:var(--muted)">${l.author||'—'}</td><td style="font-size:11px;color:var(--muted)">${l.entity||'—'}</td><td style="font-size:11px;color:var(--muted)">${l.time}</td></tr>`).join(''):'<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Нет логов</td></tr>';
+}
+
+function fLog(f,btn){
+  document.querySelectorAll('#page-logs .tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); loadLogs(f);
+}
+
+// ════════════════════════════════════════
+// BOT SETTINGS
+// ════════════════════════════════════════
+function saveBotSettings(){
+  alert('✅ Настройки сохранены!\nПерезапусти бот через start.bat чтобы применить изменения.');
+}
+function confirmRestart(){
+  if(confirm('Перезапустить бота?')) alert('Команда отправлена боту. Перезапусти start.bat вручную.');
+}
+
+// ════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════
+function om(id){document.getElementById(id).style.display='flex';}
+function cm(id){document.getElementById(id).style.display='none';}
+
+// ════════════════════════════════════════
+// SETUP
+// ════════════════════════════════════════
+function showSetup(){
+  const o=g('setupOv'); o.style.display='flex';
+  g('su').value=CFG.url; g('sk').value=CFG.key;
+}
+
+async function saveConfig(){
+  const url=g('su').value.trim().replace(/\/$/,''), key=g('sk').value.trim();
+  if(!url||!key)return;
+  try{
+    const r=await fetch(url+'/',{headers:{'X-Api-Key':key}});
+    if(!r.ok) throw new Error('Неверный ключ или IP недоступен');
+    localStorage.setItem('omni_url',url); localStorage.setItem('omni_key',key);
+    DEMO=false; g('setupOv').style.display='none'; loadAll();
+  }catch(e){g('se').style.display='block';g('se').textContent='❌ '+e.message;}
+}
+
+function demoMode(){DEMO=true; g('setupOv').style.display='none'; loadAll();}
+
+// ════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════
+function g(id){return document.getElementById(id);}
+function bw(id,pct){g(id).style.width=Math.min(100,Math.max(0,pct))+'%';}
+function cnt(id,target){
+  const e=g(id); if(!e)return; let c=0;
+  const s=Math.ceil(target/20)||1;
+  const t=setInterval(()=>{c=Math.min(c+s,target);e.textContent=c;if(c>=target)clearInterval(t);},50);
+}
+
+if(window.Telegram?.WebApp){
+  const tg=window.Telegram.WebApp;
+  tg.expand(); tg.setHeaderColor('#0a0a0f'); tg.setBackgroundColor('#0a0a0f');
+}
 </script>
 </body>
 </html>

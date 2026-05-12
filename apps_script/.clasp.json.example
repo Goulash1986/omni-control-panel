@@ -1,0 +1,29 @@
+{
+  "scriptId": "<PASTE-YOUR-APPS-SCRIPT-PROJECT-ID-HERE>",
+  "rootDir": ".",
+  "scriptExtensions": [".js", ".gs"],
+  "htmlExtensions": [".html"],
+  "jsonExtensions": [".json"],
+  "filePushOrder": [
+    "Constants.js",
+    "Util.js",
+    "Sheets.js",
+    "Auth.js",
+    "AI.js",
+    "Drive.js",
+    "TG.js",
+    "Module_Categories.js",
+    "Module_Posts.js",
+    "Module_Ads.js",
+    "Module_Hero.js",
+    "Module_Team.js",
+    "Module_Inbox.js",
+    "Module_Finance.js",
+    "Module_Habits.js",
+    "Module_Settings.js",
+    "Module_Notifications.js",
+    "Bot.js",
+    "Triggers.js",
+    "Code.js"
+  ]
+}

@@ -1015,22 +1015,26 @@ body::after{
 
 <div class="toast-el" id="toastEl"></div>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+// ═══════════════ SERVER-INJECTED BOOT ═══════════════
+window.OMNI_BOOT = {
+  apiBase:      "<?= WEBAPP_URL ?>",
+  botUsername:  "<?= BOT_USERNAME ?>",
+  initialKey:   "<?= INITIAL_KEY ?>",
+  initialToken: "<?= INITIAL_TOKEN ?>"
+};
+
 // ═══════════════ DATA ═══════════════
-let CATS = [
-  {id:1,name:'TikTok',icon:'🎵'},
-  {id:2,name:'Instagram',icon:'📸'},
-  {id:3,name:'Тирс',icon:'🎯'},
-  {id:4,name:'Личная жизнь',icon:'💫'},
-  {id:5,name:'Бизнес',icon:'💼'},
-  {id:6,name:'Мотивация',icon:'🔥'},
-];
+let CATS = [];
 let POSTS = [];
 let ADS = [];
 let HERO = [];
-let TEAM = [{id:103920773,name:'Goulash1986',role:'owner',date:'01.01.2026'}];
+let TEAM = [];
 let INBOX = [];
+let HABITS = [];
+let FINANCE = [];
 let NOTIFS = [];
 let _conCat = 'all', _adF = 'all', _inboxF = 'all';
 let _aiTimer = null;
@@ -1048,45 +1052,149 @@ const THEMES = [
 ];
 
 const CFG = {
-  get url(){return localStorage.getItem('omni_url')||'';},
-  get key(){return localStorage.getItem('omni_key')||'';},
+  get url(){
+    return (window.OMNI_BOOT && OMNI_BOOT.apiBase) || localStorage.getItem('omni_url') || '';
+  },
+  get key(){
+    return localStorage.getItem('omni_key') || (window.OMNI_BOOT && OMNI_BOOT.initialKey) || '';
+  },
+  setKey(k){ localStorage.setItem('omni_key', k || ''); },
+  setUrl(u){ localStorage.setItem('omni_url', u || ''); },
+  clearKey(){ localStorage.removeItem('omni_key'); }
 };
+
+// ═══════════════ API CLIENT ═══════════════
+const Api = {
+  async call(action, payload){
+    const url = CFG.url;
+    if(!url) throw new Error('no_api_url');
+    const body = Object.assign({ action, api_key: CFG.key }, payload || {});
+    let res;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // text/plain avoids CORS preflight on Apps Script
+        body: JSON.stringify(body),
+        redirect: 'follow',
+      });
+    } catch(e) {
+      return { ok:false, error:'network', detail:String(e) };
+    }
+    const text = await res.text();
+    let json = null;
+    try { json = JSON.parse(text); } catch(_) { return { ok:false, error:'bad_response', detail:text.slice(0,200) }; }
+    return json;
+  },
+  async get(action, query){
+    const url = new URL(CFG.url);
+    url.searchParams.set('action', action);
+    if(CFG.key) url.searchParams.set('key', CFG.key);
+    if(query) Object.keys(query).forEach(k => url.searchParams.set(k, query[k]));
+    let res;
+    try { res = await fetch(url.toString(), { redirect:'follow' }); }
+    catch(e) { return { ok:false, error:'network', detail:String(e) }; }
+    const text = await res.text();
+    try { return JSON.parse(text); }
+    catch(_) { return { ok:false, error:'bad_response', detail:text.slice(0,200) }; }
+  },
+  list(module, where){    return this.call('list',    { module, where }); },
+  get_(module, id){       return this.call('get',     { module, id }); },
+  create(module, data){   return this.call('create',  { module, data }); },
+  update(module, id, p){  return this.call('update',  { module, id, patch:p }); },
+  remove(module, id){     return this.call('delete',  { module, id }); },
+  bootstrap(){            return this.call('bootstrap'); },
+  dashboard(){            return this.call('dashboard'); },
+  whoami(){               return this.call('whoami'); },
+  authInitData(initData){ return this.call('auth_init_data', { init_data: initData }); },
+  authConsume(token){     return this.call('auth_consume',   { token }); },
+  authQrCreate(){         return this.get('auth_qr_create'); },
+  habitToggle(id, date){  return this.call('habit_toggle',   { id, date }); },
+  uploadPoster(dataUrl, mime, kind, refId){
+    return this.call('upload_poster', { data: dataUrl, mime, kind, ref_id: refId });
+  },
+  financeSummary(period){ return this.call('finance_summary',{ period }); },
+  notificationsRead(id){  return this.call('notifications_read', id ? { id } : {}); },
+  logout(){               return this.call('logout'); },
+};
+
+// ═══════════════ TELEGRAM MINI APP DETECTION ═══════════════
+const TG = (typeof Telegram !== 'undefined') ? Telegram.WebApp : null;
+const IS_MINIAPP = !!(TG && TG.initData);
+if(TG){
+  try { TG.expand(); TG.enableClosingConfirmation(); } catch(_){}
+}
 
 // ═══════════════ QR / LOCK ═══════════════
 const CORRECT_PIN = () => localStorage.getItem('omni_pin') || '2026';
 let pinInput = '';
 
-// Draw QR code (simple matrix generation)
-function drawQR() {
+// QR code: получаем токен с бэкенда, рисуем настоящий QR с deeplink на бота и опрашиваем статус
+let _qrToken = '';
+let _qrTimer = null;
+
+async function drawQR() {
   const canvas = document.getElementById('qrCanvas');
   const ctx = canvas.getContext('2d');
-  const size = 180;
-  const modules = 25;
-  const cell = Math.floor(size / modules);
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0,0,size,size);
-  // Generate pseudo-QR pattern based on URL
-  const url = `https://t.me/omni_control_bot?start=auth_${Date.now().toString(36)}`;
-  const seed = url.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-  const rng = (i) => ((seed * 1103515245 + i * 214013 + 2531011) & 0x7fffffff) % 2;
-  ctx.fillStyle = '#000';
-  for(let r=0;r<modules;r++){
-    for(let c=0;c<modules;c++){
-      let filled = false;
-      // Corner squares (finder patterns)
-      if((r<7&&c<7)||(r<7&&c>=modules-7)||(r>=modules-7&&c<7)){
-        if(r===0||r===6||(r>=modules-7&&r===modules-7)||r===modules-1){filled=c>=0;}
-        else if(c===0||c===6||(c>=modules-7&&c===modules-7)||c===modules-1){filled=true;}
-        else if(r>=2&&r<=4&&c>=2&&c<=4){filled=true;}
-        else if(r>=modules-5&&r<=modules-3&&c>=2&&c<=4){filled=true;}
-        else if(r>=2&&r<=4&&c>=modules-5&&c<=modules-3){filled=true;}
-        else filled=false;
-      } else {
-        filled = rng(r*modules+c) === 0;
-      }
-      if(filled){ctx.fillRect(c*cell,r*cell,cell-1,cell-1);}
-    }
+  ctx.fillStyle = '#fff'; ctx.fillRect(0,0,180,180);
+  ctx.fillStyle = '#888'; ctx.font='10px monospace';
+  ctx.fillText('загрузка...', 50, 90);
+
+  const r = await Api.authQrCreate();
+  if(!r.ok || !r.deeplink){
+    ctx.clearRect(0,0,180,180);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,180,180);
+    ctx.fillStyle = '#900'; ctx.fillText('QR недоступен', 35, 90);
+    const hint = document.querySelector('.qr-hint');
+    if(hint) hint.innerHTML = '⚠️ Сервер не настроен. Открой Apps Script → setup() и заполни BOT_USERNAME/BOT_TOKEN.';
+    return;
   }
+  _qrToken = r.token;
+
+  // настоящий QR картинкой
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,180,180);
+    ctx.drawImage(img,0,0,180,180);
+  };
+  img.onerror = () => {
+    ctx.clearRect(0,0,180,180);
+    ctx.fillStyle = '#fff'; ctx.fillRect(0,0,180,180);
+    ctx.fillStyle='#000'; ctx.font='9px monospace';
+    ctx.fillText('сканер не загрузился —', 12, 80);
+    ctx.fillText('используй ссылку ниже', 22, 95);
+  };
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=0&data=' + encodeURIComponent(r.deeplink);
+
+  const hint = document.querySelector('.qr-hint');
+  const botUser = (window.OMNI_BOOT && OMNI_BOOT.botUsername) || 'omni_control_bot';
+  if(hint){
+    hint.innerHTML =
+      'Открой <a href="'+r.deeplink+'" target="_blank" style="color:var(--accent2);text-decoration:underline">@'+escapeHtml(botUser)+'</a> '+
+      '— бот пришлёт ссылку входа.<br>Токен действителен '+r.expires_in_min+' мин.';
+  }
+
+  if(_qrTimer) clearInterval(_qrTimer);
+  _qrTimer = setInterval(qrPoll, 3000);
+}
+
+async function qrPoll(){
+  if(!_qrToken) return;
+  const r = await Api.get('auth_qr_check', { token: _qrToken });
+  if(r.ok && r.ready && r.api_key){
+    clearInterval(_qrTimer); _qrTimer = null;
+    CFG.setKey(r.api_key);
+    toast('✅ Вход подтверждён');
+    unlockApp();
+  } else if(r && !r.ok && r.error === 'expired'){
+    clearInterval(_qrTimer); _qrTimer = null;
+    toast('⌛ Токен истёк — обнови QR');
+    setTimeout(drawQR, 1000);
+  }
+}
+
+function escapeHtml(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function pinPress(d) {
@@ -1110,33 +1218,40 @@ function updatePinDots() {
 }
 
 function checkPin() {
-  if(pinInput === CORRECT_PIN()) {
-    unlockApp();
-  } else {
+  if(pinInput !== CORRECT_PIN()){
     const err = document.getElementById('lockErr');
     err.textContent = '❌ Неверный PIN';
-    // Shake animation
     const dots = document.getElementById('pinDots');
     dots.style.animation = 'shake .4s';
     setTimeout(()=>{dots.style.animation='';pinInput='';updatePinDots();err.textContent='';},500);
+    return;
   }
+  if(!CFG.key){
+    document.getElementById('lockErr').textContent = '🔐 Сначала войди через QR — бот выдаст ключ.';
+    pinInput=''; updatePinDots();
+    setTimeout(()=>{document.getElementById('lockErr').textContent='';}, 2400);
+    return;
+  }
+  unlockApp();
 }
 
 function unlockApp() {
   const lock = document.getElementById('lockScreen');
+  if(_qrTimer){ clearInterval(_qrTimer); _qrTimer=null; }
   lock.style.transition = 'opacity .4s, transform .4s';
   lock.style.opacity = '0';
   lock.style.transform = 'scale(1.05)';
-  setTimeout(()=>{
+  setTimeout(async ()=>{
     lock.style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    initApp();
+    await initApp();
   }, 400);
-  addNotif('🔓','Вход выполнен','Успешная авторизация в панели','сейчас');
 }
 
-function doLogout() {
+async function doLogout() {
   if(!confirm('Выйти из панели?')) return;
+  try { await Api.logout(); } catch(_){}
+  CFG.clearKey();
   document.getElementById('app').style.display = 'none';
   const lock = document.getElementById('lockScreen');
   lock.style.display = 'flex';
@@ -1204,24 +1319,128 @@ function readNotif(id){NOTIFS.find(n=>n.id===id)&&(NOTIFS.find(n=>n.id===id).rea
 function clearNotifs(){NOTIFS=[];renderNotifs();updateBell();}
 
 // ═══════════════ INIT ═══════════════
-function initApp() {
-  const th = localStorage.getItem('omni_theme') || 'cyber';
-  document.documentElement.setAttribute('data-theme', th);
+async function initApp(){
   buildThemeGrid();
-  loadDash();
-  loadContent();
-  loadKanban();
-  loadAds();
-  loadHero();
-  loadTeam();
-  loadInbox();
-  loadFinance();
-  populateCats();
   setupDragDrop();
+  await refreshAll();
+  startNotifPolling();
+}
 
-  // Demo notifications
-  setTimeout(()=>addNotif('📢','Реклама "Beauty Store" активирована','Автопост в 14:00','только что'),1000);
-  setTimeout(()=>addNotif('📊','Пост собрал в 2× больше лайков','Рилс от 25.02 — рассмотри репост!','2 мин назад'),2500);
+async function ensureAuthed(){
+  // 1) Внутри Telegram Mini App — авторизуемся через initData
+  if(IS_MINIAPP && TG.initData){
+    const r = await Api.authInitData(TG.initData);
+    if(r.ok && r.api_key){ CFG.setKey(r.api_key); return true; }
+    toast('⚠️ Авторизация Mini App не удалась: '+(r.error||'?'));
+    return false;
+  }
+  // 2) Уже есть валидный ключ — проверим whoami
+  if(CFG.key){
+    const r = await Api.whoami();
+    if(r.ok) return true;
+    CFG.clearKey();
+  }
+  // 3) URL содержит ?key= (приходит из бота) — сохраним и проверим
+  const urlKey = (window.OMNI_BOOT && OMNI_BOOT.initialKey) || '';
+  if(urlKey){
+    CFG.setKey(urlKey);
+    const r = await Api.whoami();
+    if(r.ok) return true;
+    CFG.clearKey();
+  }
+  return false;
+}
+
+async function refreshAll(){
+  const r = await Api.bootstrap();
+  if(!r.ok){ toast('⚠️ '+r.error); return; }
+  CATS    = (r.categories||[]).map(c => ({ id:c.id, name:c.name, icon:c.icon, sort_order:c.sort_order }));
+  POSTS   = (r.posts||[]).map(normalizePost);
+  ADS     = (r.ads||[]).map(normalizeAd);
+  HERO    = (r.hero||[]).map(normalizeHero);
+  TEAM    = (r.team||[]).map(normalizeTeam);
+  INBOX   = (r.inbox||[]).map(normalizeInbox);
+  FINANCE = (r.finance||[]);
+  HABITS  = (r.habits||[]).filter(h=>!h.archived);
+  NOTIFS  = (r.notifications || []).map(n => ({
+    id:n.id, icon:n.icon, text:n.text, detail:n.detail,
+    time:formatAgo(n.created_at), read:n.read===true,
+  }));
+  populateCats();
+  loadDash(); loadContent(); loadKanban(); loadAds();
+  loadHero(); loadTeam(); loadInbox(); loadFinance();
+  if(typeof loadHabits==='function') loadHabits();
+  updateBell();
+}
+
+// ═══════════════ NORMALIZERS (server schema → ui shape) ═══════════════
+function normalizePost(p){
+  return {
+    id: p.id, cat_id: p.cat_id, title: p.title, text: p.text,
+    poster_url: p.poster_url, buttons: Array.isArray(p.buttons)?p.buttons:[],
+    scheduled_date: p.scheduled_date || null,
+    created: p.created_at ? new Date(p.created_at).toLocaleDateString('ru') : '',
+    status: p.status,
+  };
+}
+function normalizeAd(a){
+  return {
+    id: a.id, client: a.client, contact: a.contact, text: a.text,
+    poster_url: a.poster_url, price: Number(a.price||0), currency: a.currency||'UAH',
+    pub_at: a.pub_at ? new Date(a.pub_at).toLocaleDateString('ru') : '',
+    del_after: Number(a.del_after||0), status: a.status||'pending',
+  };
+}
+function normalizeHero(h){
+  return { id:h.id, title:h.title, text:h.text, emoji:h.emoji, poster_url:h.poster_url, active:h.active };
+}
+function normalizeTeam(u){
+  return {
+    id: u.tg_user_id || u.id,
+    name: u.name || u.username || ('id '+u.tg_user_id),
+    role: u.role,
+    date: u.added_at ? new Date(u.added_at).toLocaleDateString('ru') : '',
+    _row_id: u.id,
+  };
+}
+function normalizeInbox(m){
+  const srcMap = { instagram:'ig', tiktok:'tt', telegram:'tg', threads:'th' };
+  return {
+    id: m.id,
+    from: m.from_name || ('id '+m.from_id),
+    msg: m.message || '',
+    src: srcMap[(m.source||'').toLowerCase()] || 'tg',
+    time: formatAgo(m.received_at),
+    status: (m.type === 'archived') ? 'archived' : (m.type === 'unread' ? 'unread' : 'read'),
+    starred: m.type === 'starred',
+    warn: false,
+    _orig: m,
+  };
+}
+
+function formatAgo(iso){
+  if(!iso) return '';
+  const t = new Date(iso).getTime();
+  const diff = (Date.now() - t) / 1000;
+  if(diff < 60) return 'только что';
+  if(diff < 3600) return Math.floor(diff/60)+' мин назад';
+  if(diff < 86400) return Math.floor(diff/3600)+' ч назад';
+  return Math.floor(diff/86400)+' дн назад';
+}
+
+let _notifTimer = null;
+function startNotifPolling(){
+  if(_notifTimer) clearInterval(_notifTimer);
+  _notifTimer = setInterval(async () => {
+    const r = await Api.list('notifications');
+    if(r.ok && Array.isArray(r.items)){
+      NOTIFS = r.items.map(n => ({
+        id:n.id, icon:n.icon, text:n.text, detail:n.detail,
+        time:formatAgo(n.created_at), read:n.read===true,
+      }));
+      updateBell();
+    }
+  }, 30000);
 }
 
 // ═══════════════ NAVIGATION ═══════════════
@@ -1346,27 +1565,47 @@ function editPost(id) {
   g('ov-post').style.display='flex';
 }
 
-function savePost() {
+async function savePost() {
   const eid = parseInt(g('post-eid').value);
   const catId = parseInt(g('post-cat').value);
-  const cat = CATS.find(c=>c.id===catId);
   const txt = g('post-text').value.trim();
   if(!txt){toast('❌ Введи текст поста');return;}
   const btns = [...g('post-btns').querySelectorAll('.ibr')].map(r=>{
     const inp = r.querySelectorAll('input');
     return {text:inp[0].value.trim(),url:inp[1].value.trim(),clicks:0};
   }).filter(b=>b.text);
+
+  const posterField = g('post-purl').value || '';
+  let posterUrl = posterField;
+  if(posterField.startsWith('data:')){
+    const up = await Api.uploadPoster(posterField, posterField.match(/^data:([^;]+);/)[1]||'image/png', 'post', eid||0);
+    if(!up.ok){ toast('❌ Картинка: '+up.error); return; }
+    posterUrl = up.url;
+  }
   const d = {
-    cat_id:catId, poster_url:g('post-purl').value,
+    cat_id:catId, poster_url:posterUrl,
     title: txt.replace(/[\n\r]/g,' ').replace(/[^\wА-яЁёЇїІіЄє\s!?🔥✨💡💎🎵📸🎯💫💼]/g,'').trim().substring(0,50)||'Без названия',
-    text:txt, buttons:btns, created:new Date().toLocaleDateString('ru'),
-    scheduled_date: null
+    text:txt, buttons:btns,
+    scheduled_date: '',
   };
-  if(eid){ const i=POSTS.findIndex(p=>p.id===eid); if(i>=0)POSTS[i]={...POSTS[i],...d}; }
-  else POSTS.unshift({id:Date.now(),...d});
+  const r = eid
+    ? await Api.update('posts', eid, d)
+    : await Api.create('posts', { ...d, status:'draft' });
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  const np = normalizePost(r.item);
+  if(eid){ const i=POSTS.findIndex(p=>p.id===eid); if(i>=0) POSTS[i] = np; }
+  else POSTS.unshift(np);
   cls('ov-post'); renderCon(); loadDash(); loadKanban();
   toast('✅ Карточка сохранена!');
-  addNotif('📦',`Карточка "${d.title}"`,eid?'Обновлена':'Создана новая карточка','сейчас');
+}
+
+async function delPost(id) {
+  if(!confirm('Удалить карточку?'))return;
+  const r = await Api.remove('posts', id);
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  POSTS = POSTS.filter(p=>p.id!==id);
+  renderCon(); loadDash(); loadKanban();
+  toast('🗑 Удалено');
 }
 
 function sendPost(id) {
@@ -1377,14 +1616,6 @@ function sendPost(id) {
   }
 }
 
-function delPost(id) {
-  if(!confirm('Удалить карточку?'))return;
-  const p = POSTS.find(x=>x.id===id);
-  POSTS = POSTS.filter(p=>p.id!==id);
-  renderCon(); loadDash(); loadKanban();
-  toast('🗑 Удалено');
-  if(p) addNotif('🗑',`Карточка удалена`,p.title||'','сейчас');
-}
 
 // ═══════════════ KANBAN CALENDAR ═══════════════
 function loadKanban() {
@@ -1430,16 +1661,31 @@ function kbDragStart(e){
   e.dataTransfer.effectAllowed='move';
 }
 
-function kbDrop(e, cell) {
+async function kbDrop(e, cell) {
   e.preventDefault();
   cell.classList.remove('drag-over');
   const date = cell.dataset.date;
   if(!_dragPost || !date) return;
   if(_dragPost.type==='post'){
     const p = POSTS.find(x=>x.id===_dragPost.id);
-    if(p){ p.scheduled_date=date; toast(`📅 Пост перенесён на ${date}`); addNotif('📅',`Пост перенесён`,`"${p.title||''}" → ${date}`,'сейчас'); }
+    if(p){
+      const prev = p.scheduled_date;
+      p.scheduled_date = date;
+      loadKanban();
+      const r = await Api.update('posts', p.id, { scheduled_date: date, status:'scheduled' });
+      if(!r.ok){ p.scheduled_date = prev; loadKanban(); toast('❌ '+r.error); }
+      else toast(`📅 Пост перенесён на ${date}`);
+    }
+  } else if(_dragPost.type==='ad'){
+    const a = ADS.find(x=>x.id===_dragPost.id);
+    if(a){
+      const prev = a.pub_at;
+      a.pub_at = date;
+      loadKanban();
+      const r = await Api.update('ads', a.id, { pub_at: date });
+      if(!r.ok){ a.pub_at = prev; loadKanban(); toast('❌ '+r.error); }
+    }
   }
-  loadKanban();
 }
 
 function kbPrev(){_kbOffset--;loadKanban();}
@@ -1513,35 +1759,50 @@ function editAd(id){
   g('ov-ad').style.display='flex';
 }
 
-function activateAd(id){
-  const a=ADS.find(x=>x.id===id);
-  if(a){a.status='active';loadAds();toast('📢 Реклама активирована!');addNotif('📢',`Реклама "${a.client}"`,`Активирована в канале`,'сейчас');}
+async function activateAd(id){
+  const r = await Api.update('ads', id, { status:'active' });
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  const idx = ADS.findIndex(x=>x.id===id);
+  if(idx>=0) ADS[idx] = normalizeAd(r.item);
+  loadAds(); loadFinance(); loadDash();
+  toast('📢 Реклама активирована!');
 }
 
-function delAd(id){
+async function delAd(id){
   if(!confirm('Удалить кампанию?'))return;
-  const a=ADS.find(x=>x.id===id);
-  ADS=ADS.filter(a=>a.id!==id);loadAds();loadDash();
+  const r = await Api.remove('ads', id);
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  ADS = ADS.filter(a=>a.id!==id);
+  loadAds(); loadDash(); loadFinance();
   toast('🗑 Кампания удалена');
-  if(a)addNotif('🗑',`Реклама удалена`,a.client,'сейчас');
 }
 
-function saveAd(){
+async function saveAd(){
   const eid=parseInt(g('ad-eid').value);
+  const posterField = g('ad-purl').value || '';
+  let posterUrl = posterField;
+  if(posterField.startsWith('data:')){
+    const up = await Api.uploadPoster(posterField, posterField.match(/^data:([^;]+);/)[1]||'image/png', 'ad', eid||0);
+    if(!up.ok){ toast('❌ Картинка: '+up.error); return; }
+    posterUrl = up.url;
+  }
   const d={
-    poster_url:g('ad-purl').value, text:g('ad-text').value.trim(),
+    poster_url:posterUrl, text:g('ad-text').value.trim(),
     client:g('ad-client').value.trim(), contact:g('ad-contact').value.trim(),
     price:parseFloat(g('ad-price').value)||0, currency:g('ad-cur').value,
     del_after:parseInt(g('ad-del').value)||0,
-    pub_at:g('ad-pub').value||new Date().toLocaleDateString('ru'),
-    status:'pending'
+    pub_at: g('ad-pub') ? g('ad-pub').value : '',
   };
   if(!d.text||!d.client){toast('❌ Заполни текст и рекламодателя');return;}
-  if(eid){const i=ADS.findIndex(a=>a.id===eid);if(i>=0)ADS[i]={...ADS[i],...d};}
-  else ADS.unshift({id:Date.now(),...d});
-  cls('ov-ad');loadAds();loadDash();
+  const r = eid
+    ? await Api.update('ads', eid, d)
+    : await Api.create('ads', { ...d, status:'pending' });
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  const na = normalizeAd(r.item);
+  if(eid){ const i=ADS.findIndex(a=>a.id===eid); if(i>=0) ADS[i]=na; }
+  else ADS.unshift(na);
+  cls('ov-ad'); loadAds(); loadDash(); loadFinance();
   toast('✅ Кампания сохранена!');
-  addNotif('💼',`Кампания "${d.client}"`,eid?'Обновлена':'Добавлена в очередь','сейчас');
 }
 
 // ═══════════════ HERO ═══════════════
@@ -1578,14 +1839,35 @@ function resetHeroForm(){
 }
 function editHero(id){const h=HERO.find(x=>x.id===id);if(!h)return;resetHeroForm();g('hero-eid').value=id;g('hero-title').value=h.title||'';g('hero-text').value=h.text;g('hero-emoji').value=h.emoji||'';if(h.poster_url){g('hero-purl').value=h.poster_url;g('hero-prev').style.display='block';g('hero-prev-img').src=h.poster_url;}g('ov-hero').style.display='flex';}
 function previewHero(id){const h=HERO.find(x=>x.id===id);if(h)alert(`Превью:\n\n${h.emoji||'🌟'} ${h.title||''}\n\n${h.text}`);}
-function delHero(id){if(!confirm('Удалить карточку персонажа?'))return;HERO=HERO.filter(h=>h.id!==id);loadHero();toast('🗑 Удалено');}
-function saveHero(){
+async function delHero(id){
+  if(!confirm('Удалить карточку персонажа?'))return;
+  const r = await Api.remove('hero', id);
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  HERO=HERO.filter(h=>h.id!==id); loadHero(); toast('🗑 Удалено');
+}
+async function saveHero(){
   const eid=parseInt(g('hero-eid').value);
-  const d={title:g('hero-title').value.trim(),text:g('hero-text').value.trim(),emoji:g('hero-emoji').value||'🌟',poster_url:g('hero-purl').value};
+  const posterField = g('hero-purl').value || '';
+  let posterUrl = posterField;
+  if(posterField.startsWith('data:')){
+    const up = await Api.uploadPoster(posterField, posterField.match(/^data:([^;]+);/)[1]||'image/png', 'hero', eid||0);
+    if(!up.ok){ toast('❌ Картинка: '+up.error); return; }
+    posterUrl = up.url;
+  }
+  const d={
+    title:g('hero-title').value.trim(),
+    text:g('hero-text').value.trim(),
+    emoji:g('hero-emoji').value||'🌟',
+    poster_url:posterUrl,
+  };
   if(!d.title&&!d.text){toast('❌ Заполни заголовок или текст');return;}
-  if(eid){const i=HERO.findIndex(h=>h.id===eid);if(i>=0)HERO[i]={...HERO[i],...d};}
-  else{if(HERO.length>=6){toast('Максимум 6 карточек!');return;}HERO.push({id:Date.now(),...d});}
-  cls('ov-hero');loadHero();toast('✅ Карточка персонажа сохранена!');
+  if(!eid && HERO.length>=6){ toast('Максимум 6 карточек!'); return; }
+  const r = eid ? await Api.update('hero', eid, d) : await Api.create('hero', { ...d, active:true });
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  const nh = normalizeHero(r.item);
+  if(eid){ const i=HERO.findIndex(h=>h.id===eid); if(i>=0)HERO[i]=nh; }
+  else HERO.push(nh);
+  cls('ov-hero'); loadHero(); toast('✅ Карточка персонажа сохранена!');
 }
 
 // ═══════════════ TEAM ═══════════════
@@ -1605,8 +1887,21 @@ function loadTeam(){
     </tr>`).join('');
 }
 
-function changeRole(id){const u=TEAM.find(x=>x.id===id);if(!u)return;const nr=u.role==='admin'?'editor':'admin';if(confirm(`Сменить роль ${u.name} на ${nr}?`)){u.role=nr;loadTeam();toast('✅ Роль изменена');addNotif('🔄',`Роль изменена`,`${u.name} → ${nr}`,'сейчас');}}
-function banTeam(id,name){if(!confirm(`Исключить ${name} из команды?`))return;const i=TEAM.findIndex(x=>x.id===id);if(i>=0)TEAM.splice(i,1);loadTeam();toast('🚫 Участник исключён');addNotif('🚫',`${name} исключён`,`Удалён из команды`,'сейчас');}
+async function changeRole(id){
+  const u=TEAM.find(x=>x.id===id);if(!u||!u._row_id)return;
+  const nr=u.role==='admin'?'member':'admin';
+  if(!confirm(`Сменить роль ${u.name} на ${nr}?`)) return;
+  const r = await Api.update('team', u._row_id, { role:nr });
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  u.role=nr; loadTeam(); toast('✅ Роль изменена');
+}
+async function banTeam(id,name){
+  if(!confirm(`Исключить ${name} из команды?`))return;
+  const u=TEAM.find(x=>x.id===id);if(!u||!u._row_id)return;
+  const r = await Api.remove('team', u._row_id);
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  TEAM=TEAM.filter(x=>x.id!==id); loadTeam(); toast('🚫 Участник исключён');
+}
 
 // ═══════════════ INBOX ═══════════════
 function loadInbox(){
@@ -1644,34 +1939,55 @@ function renderInbox(){
     </tr>`).join('') : `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px;font-size:12px">📭 Нет сообщений</td></tr>`;
 }
 
-function replyMsg(id,from){const t=prompt(`Ответить ${from}:`);if(t){toast(`✅ Ответ отправлен ${from}`);addNotif('↩️',`Ответ отправлен`,from,'сейчас');}}
-function starMsg(id){const m=INBOX.find(x=>x.id===id);if(m){m.starred=!m.starred;renderInbox();}}
-function archiveMsg(id){const m=INBOX.find(x=>x.id===id);if(m){m.status='archived';loadInbox();}}
+function replyMsg(id,from){const t=prompt(`Ответить ${from}:`);if(t){toast(`✅ Ответ отправлен ${from}`);}}
+async function starMsg(id){
+  const m=INBOX.find(x=>x.id===id); if(!m) return;
+  const nextType = m.starred ? 'unread' : 'starred';
+  const r = await Api.update('inbox', id, { type: nextType });
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  m.starred=!m.starred; renderInbox();
+}
+async function archiveMsg(id){
+  const r = await Api.update('inbox', id, { type:'archived' });
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  const m=INBOX.find(x=>x.id===id); if(m){ m.status='archived'; loadInbox(); }
+}
 
 // ═══════════════ FINANCE ═══════════════
 function loadFinance(){
-  const inc=ADS.filter(a=>a.status!=='pending').reduce((s,a)=>s+a.price,0);
-  cnt('fInc',inc);cnt('fExp',0);cnt('fPro',inc);cnt('fCam',ADS.length);
-  g('fTot').textContent=inc+' UAH';
-  g('fAvg').textContent=(ADS.length?Math.round(inc/ADS.length):0)+' UAH';
-  g('fAct2').textContent=ADS.filter(a=>a.status==='active').length;
-  g('fDone').textContent=ADS.filter(a=>a.status==='done').length;
-  const clients=[...new Set(ADS.map(a=>a.client))];
-  g('finTable').innerHTML=clients.length?`
+  const cur = (FINANCE.find(f=>f.currency)||{}).currency || 'UAH';
+  const income = FINANCE.filter(f=>f.kind==='income').reduce((s,f)=>s+Number(f.amount||0),0);
+  const expense = FINANCE.filter(f=>f.kind==='expense').reduce((s,f)=>s+Number(f.amount||0),0);
+  cnt('fInc', income); cnt('fExp', expense); cnt('fPro', income-expense); cnt('fCam', ADS.length);
+  g('fTot').textContent = (income).toLocaleString('ru')+' '+cur;
+  g('fAvg').textContent = (ADS.length ? Math.round(income/ADS.length) : 0).toLocaleString('ru')+' '+cur;
+  g('fAct2').textContent = ADS.filter(a=>a.status==='active').length;
+  g('fDone').textContent = ADS.filter(a=>a.status==='done').length;
+  const clients=[...new Set(ADS.map(a=>a.client).filter(Boolean))];
+  g('finTable').innerHTML = clients.length ? `
     <table class="tbl"><thead><tr><th>Клиент</th><th>Сумма</th><th>Кампаний</th></tr></thead><tbody>
-    ${clients.map(cl=>{const ca=ADS.filter(a=>a.client===cl);return`<tr><td style="font-size:12px">${cl}</td><td style="color:var(--green);font-size:12px">${ca.reduce((s,a)=>s+a.price,0)} UAH</td><td style="font-size:12px">${ca.length}</td></tr>`;}).join('')}
+    ${clients.map(cl=>{const ca=ADS.filter(a=>a.client===cl);return`<tr><td style="font-size:12px">${cl}</td><td style="color:var(--green);font-size:12px">${ca.reduce((s,a)=>s+Number(a.price||0),0).toLocaleString('ru')} ${cur}</td><td style="font-size:12px">${ca.length}</td></tr>`;}).join('')}
     </tbody></table>` : '<div style="color:var(--muted);font-size:12px;padding:10px 0">Нет рекламных кампаний</div>';
 }
 
 // ═══════════════ PANIC ═══════════════
-function doPanic(){
+async function doPanic(){
   if(!confirm('🚨 PANIC MODE\n\nОтменить все запланированные публикации?\nКоманда будет уведомлена!'))return;
-  const n=POSTS.filter(p=>p.scheduled_date).length;
-  POSTS.forEach(p=>{p.scheduled_date=null;});
-  ADS.forEach(a=>{if(a.status==='pending')a.status='cancelled';});
-  renderCon();loadAds();loadKanban();
-  toast(`🚨 Panic Mode! Сброшено: ${n} постов`);
-  addNotif('🚨','PANIC MODE активирован',`Отменено запланированных постов: ${n}`,'сейчас');
+  const planned = POSTS.filter(p => p.scheduled_date);
+  const pendingAds = ADS.filter(a => a.status === 'pending');
+  POSTS.forEach(p => p.scheduled_date = null);
+  ADS.forEach(a => { if(a.status==='pending') a.status = 'cancelled'; });
+  renderCon(); loadAds(); loadKanban();
+  let fails = 0;
+  for(const p of planned){
+    const r = await Api.update('posts', p.id, { scheduled_date: '', status: 'draft' });
+    if(!r.ok) fails++;
+  }
+  for(const a of pendingAds){
+    const r = await Api.update('ads', a.id, { status: 'cancelled' });
+    if(!r.ok) fails++;
+  }
+  toast(`🚨 Panic Mode! Сброшено: ${planned.length} постов · ${pendingAds.length} реклам` + (fails?` (ошибок: ${fails})`:''));
 }
 
 // ═══════════════ CATEGORIES ═══════════════
@@ -1684,17 +2000,22 @@ function renderCatsList(){
       <button onclick="deleteCat(${c.id})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:4px">🗑</button>
     </div>`).join('');
 }
-function addCat(){
+async function addCat(){
   const name=g('new-cat-name').value.trim(),icon=g('new-cat-icon').value.trim()||'📁';
   if(!name){toast('❌ Введи название');return;}
-  CATS.push({id:Date.now(),name,icon});
+  const sort_order = CATS.length + 1;
+  const r = await Api.create('categories', { name, icon, sort_order });
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  CATS.push({ id:r.item.id, name:r.item.name, icon:r.item.icon, sort_order:r.item.sort_order });
   g('new-cat-name').value='';g('new-cat-icon').value='';
   renderCatsList();loadContent();populateCats();
   toast(`✅ Категория "${name}" добавлена`);
 }
-function deleteCat(id){
+async function deleteCat(id){
   if(POSTS.some(p=>p.cat_id===id)){toast('❌ В категории есть карточки!');return;}
   if(!confirm('Удалить категорию?'))return;
+  const r = await Api.remove('categories', id);
+  if(!r.ok){ toast('❌ '+r.error); return; }
   const i=CATS.findIndex(x=>x.id===id);if(i>=0)CATS.splice(i,1);
   renderCatsList();loadContent();populateCats();toast('🗑 Категория удалена');
 }
@@ -1765,17 +2086,27 @@ function setTheme(th,btn){
   toast(`🎨 Тема: ${THEMES.find(t=>t.id===th)?.name}`);
 }
 
-// ═══════════════ SETUP ═══════════════
-function showSetup(){g('sov').style.display='flex';g('su').value=CFG.url;g('sk').value=CFG.key;}
+// ═══════════════ SETUP (ручной ввод ключа сессии, если потерян) ═══════════════
+function showSetup(){
+  g('sov').style.display='flex';
+  if(g('su')) g('su').value = CFG.url;
+  if(g('sk')) g('sk').value = CFG.key;
+}
 async function saveConfig(){
-  const url=g('su').value.trim().replace(/\/$/,''),key=g('sk').value.trim();
-  if(!url||!key)return;
-  try{
-    const r=await fetch(url+'/',{headers:{'X-Api-Key':key}});
-    if(!r.ok)throw new Error('Неверный ключ или сервер недоступен');
-    localStorage.setItem('omni_url',url);localStorage.setItem('omni_key',key);
-    g('sov').style.display='none';toast('✅ Подключено!');
-  }catch(e){g('se').style.display='block';g('se').textContent='❌ '+e.message;}
+  const url = g('su') ? g('su').value.trim().replace(/\/$/,'') : '';
+  const key = g('sk').value.trim();
+  if(!key){ g('se').style.display='block'; g('se').textContent='❌ Введи ключ сессии'; return; }
+  if(url) CFG.setUrl(url);
+  CFG.setKey(key);
+  const r = await Api.whoami();
+  if(!r.ok){
+    CFG.clearKey();
+    g('se').style.display='block'; g('se').textContent='❌ '+(r.error||'unauthorized');
+    return;
+  }
+  g('sov').style.display='none';
+  toast('✅ Подключено!');
+  await refreshAll();
 }
 
 // ═══════════════ DRAG & DROP FILES ═══════════════
@@ -1814,19 +2145,27 @@ shakeStyle.textContent='@keyframes shake{0%,100%{transform:translateX(0)}20%{tra
 document.head.appendChild(shakeStyle);
 
 // ═══════════════ START ═══════════════
-document.addEventListener('DOMContentLoaded', ()=>{
+document.addEventListener('DOMContentLoaded', async () => {
   const th=localStorage.getItem('omni_theme')||'cyber';
   document.documentElement.setAttribute('data-theme',th);
-  drawQR();
-  // Drag & drop setup delayed for sheets
+
   document.addEventListener('click', e=>{
     if(g('notifPanel').classList.contains('open')&&!g('notifPanel').contains(e.target)&&e.target.id!=='bellBtn'){
       g('notifPanel').classList.remove('open');
     }
   });
-});
 
-if(window.Telegram?.WebApp){window.Telegram.WebApp.expand();}
+  // 1) Mini App или сохранённый ключ — пытаемся авторизоваться без lock-screen
+  const ok = await ensureAuthed();
+  if(ok){
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    await initApp();
+    return;
+  }
+  // 2) нет авторизации — показываем lock screen с настоящим QR
+  drawQR();
+});
 </script>
 </body>
 </html>

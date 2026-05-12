@@ -24,6 +24,8 @@ function doGet(e) {
         return ok_({ pong: true, time: nowIso_() });
       case 'auth_qr_create':
         return apiAuthQrCreate_(e);
+      case 'auth_qr_check':
+        return apiAuthQrCheck_(e);
       case 'whoami':
         return apiWhoAmI_(e);
       default:
@@ -52,8 +54,10 @@ function doPost(e) {
 
 function serveHtml_(params) {
   const t = HtmlService.createTemplateFromFile('index');
-  t.WEBAPP_URL = getProp_(PROP.WEBAPP_URL) || '';
-  t.BOT_USERNAME = getProp_(PROP.BOT_USERNAME) || '';
+  t.WEBAPP_URL    = getProp_(PROP.WEBAPP_URL) || '';
+  t.BOT_USERNAME  = getProp_(PROP.BOT_USERNAME) || '';
+  t.INITIAL_KEY   = (params && params.key)   || '';
+  t.INITIAL_TOKEN = (params && params.token) || '';
   const out = t.evaluate()
     .setTitle('OMNI-CONTROL 2026')
     .addMetaTag('viewport', 'width=device-width,initial-scale=1.0,maximum-scale=1.0,viewport-fit=cover')
@@ -126,6 +130,21 @@ function apiAuthQrCreate_(e) {
   const username = getProp_(PROP.BOT_USERNAME);
   const link = username ? ('https://t.me/' + username + '?start=auth_' + token) : '';
   return ok_({ token: token, deeplink: link, expires_in_min: QR_TOKEN_TTL_MIN });
+}
+
+function apiAuthQrCheck_(e) {
+  // публичный poll-эндпоинт: вернёт api_key если токен уже потреблён ботом
+  const token = (e && e.parameter && e.parameter.token) || '';
+  if (!token) return err_('no_token', 'auth');
+  const { obj } = findRowBy_(SHEET.AUTH, r => String(r.token) === String(token));
+  if (!obj) return err_('not_found', 'auth');
+  if (obj.expires_at && new Date(obj.expires_at) < new Date() && !obj.used_at) {
+    return err_('expired', 'auth');
+  }
+  if (obj.used_at && obj.api_key) {
+    return ok_({ ready: true, api_key: obj.api_key, tg_user_id: obj.tg_user_id });
+  }
+  return ok_({ ready: false });
 }
 
 function apiWhoAmI_(e) {

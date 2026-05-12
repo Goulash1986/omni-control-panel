@@ -617,6 +617,22 @@ body::after{
 .sbox{background:var(--bg2);border:1px solid var(--border);border-radius:22px;padding:30px;width:90%;max-width:380px;}
 
 /* ═══════════════ TOAST ═══════════════ */
+/* ═══════════════ HABITS ═══════════════ */
+.hcard{background:var(--card);border:1px solid var(--card-border);border-radius:18px;padding:14px 16px;backdrop-filter:blur(10px);position:relative;}
+.hctop{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.hcicon{font-size:28px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--bg3);border-radius:14px;border:1px solid var(--border);}
+.hcmid{flex:1;min-width:0;}
+.hcname{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;line-height:1.2;margin-bottom:3px;}
+.hcstreak{font-size:11px;color:var(--muted);letter-spacing:.4px;}
+.hctoggle{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:18px;font-weight:700;cursor:pointer;transition:.18s;display:flex;align-items:center;justify-content:center;}
+.hctoggle:hover{transform:scale(1.05);}
+.hctoggle.on{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:var(--accent3);color:#fff;box-shadow:0 0 14px var(--glow);}
+.hcdots{display:flex;gap:6px;margin-bottom:10px;}
+.hdot{flex:1;height:30px;border-radius:8px;background:var(--bg3);border:1px solid rgba(255,255,255,.04);font-size:10px;color:var(--muted);display:flex;align-items:center;justify-content:center;font-family:var(--font-ui);transition:.15s;}
+.hd-on{background:linear-gradient(135deg,rgba(124,58,237,.5),rgba(168,85,247,.7));border-color:var(--accent3);color:#fff;font-weight:700;}
+.hd-today{outline:1.5px solid var(--accent3);outline-offset:1px;}
+.hcact{display:flex;gap:6px;justify-content:flex-end;}
+
 .toast-el{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:12px 22px;font-size:12px;font-family:var(--font-ui);color:var(--text);z-index:9997;transition:transform .3s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 30px rgba(0,0,0,.4);white-space:nowrap;pointer-events:none;}
 .toast-el.show{transform:translateX(-50%) translateY(0);}
 
@@ -701,6 +717,7 @@ body::after{
   <button class="nb" onclick="gp('team',this)">👥 Команда</button>
   <button class="nb" onclick="gp('inbox',this)">📨 Инбокс<span class="bdg" id="inbBdg">0</span></button>
   <button class="nb" onclick="gp('finance',this)">💰 Финансы</button>
+  <button class="nb" onclick="gp('habits',this)">✅ Привычки</button>
   <button class="nb" onclick="gp('settings',this)">⚙️ Настройки</button>
 </nav>
 
@@ -838,6 +855,21 @@ body::after{
     <div class="frow"><div class="frl">Активных кампаний</div><div class="frv" id="fAct2">0</div></div>
     <div class="frow"><div class="frl">Завершённых</div><div class="frv" id="fDone">0</div></div>
   </div>
+</div>
+
+<!-- ████ HABITS ████ -->
+<div id="page-habits" class="page">
+  <div class="sh">
+    <div class="stit">Привычки</div>
+    <button class="btn bg-btn bsm" onclick="openHabit()">＋ Новая</button>
+  </div>
+  <div class="g4">
+    <div class="stat" style="--al:var(--green)"><div class="sl">Активные</div><div class="sv" id="haCount">0</div><div class="ss">привычек</div></div>
+    <div class="stat" style="--al:var(--accent2)"><div class="sl">Лучший</div><div class="sv" id="haTopStreak">0</div><div class="ss">streak</div></div>
+    <div class="stat" style="--al:var(--blue)"><div class="sl">Сегодня</div><div class="sv" id="haToday">0</div><div class="ss">из <span id="haTodayMax">0</span></div></div>
+    <div class="stat" style="--al:var(--yellow)"><div class="sl">Неделя</div><div class="sv" id="haWeekPct">0</div><div class="ss">%</div></div>
+  </div>
+  <div id="habitsList" style="display:flex;flex-direction:column;gap:10px"></div>
 </div>
 
 <!-- ████ SETTINGS ████ -->
@@ -986,6 +1018,24 @@ body::after{
 </div></div>
 
 <!-- CATS SHEET -->
+<!-- HABIT SHEET -->
+<div id="ov-habit" class="ov" style="display:none" onclick="if(event.target===this)cls('ov-habit')">
+<div class="shbox">
+  <div class="sh-handle"></div>
+  <div class="sh-title">Привычка <button class="sh-close" onclick="cls('ov-habit')">✕</button></div>
+  <input type="hidden" id="habit-eid">
+  <div class="fr2">
+    <div class="fg"><label class="fl">Иконка</label><input class="fi" id="habit-icon" placeholder="🏃" maxlength="4" value="✅"></div>
+    <div class="fg"><label class="fl">В неделю (раз)</label><input class="fi" id="habit-target" type="number" min="1" max="7" value="7"></div>
+  </div>
+  <div class="fg"><label class="fl">Название</label><input class="fi" id="habit-name" placeholder="Спорт"></div>
+  <div class="fa">
+    <button class="btn bp" onclick="saveHabit()">💾 Сохранить</button>
+    <button class="btn bd-btn" onclick="deleteHabitFromModal()" id="habit-del-btn" style="display:none">🗑 Удалить</button>
+    <button class="btn bg-btn" onclick="cls('ov-habit')">Отмена</button>
+  </div>
+</div></div>
+
 <div id="ov-cats" class="ov" style="display:none" onclick="if(event.target===this)cls('ov-cats')">
 <div class="shbox">
   <div class="sh-handle"></div>
@@ -1005,10 +1055,11 @@ body::after{
 <div id="sov" class="sov" style="display:none">
 <div class="sbox">
   <div style="font-family:var(--font-display);font-size:24px;letter-spacing:4px;background:linear-gradient(135deg,var(--accent2),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px">OMNI-CONTROL</div>
-  <div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:22px">ПОДКЛЮЧЕНИЕ К API</div>
-  <div class="fg"><label class="fl">IP сервера</label><input class="fi" id="su" placeholder="http://123.45.67.89"></div>
-  <div class="fg"><label class="fl">API Secret Key</label><input class="fi" id="sk" type="password" placeholder="из .env файла"></div>
-  <button class="btn bp bfw" style="margin-bottom:10px" onclick="saveConfig()">🔌 Подключить</button>
+  <div style="font-size:10px;color:var(--muted);letter-spacing:2px;margin-bottom:22px">КЛЮЧ СЕССИИ</div>
+  <div style="font-size:11px;color:var(--text2);margin-bottom:14px;line-height:1.5">Получи ключ у бота — он пришлёт его после <code>/start</code>, или скопируй из чата.</div>
+  <div class="fg"><label class="fl">API URL <span style="opacity:.5">(если другой бэкенд)</span></label><input class="fi" id="su" placeholder="оставь пустым"></div>
+  <div class="fg"><label class="fl">Ключ сессии</label><input class="fi" id="sk" type="password" placeholder="omni_..."></div>
+  <button class="btn bp bfw" style="margin-bottom:10px" onclick="saveConfig()">🔌 Войти</button>
   <button class="btn bg-btn bfw" onclick="g('sov').style.display='none'">✕ Закрыть</button>
   <div id="se" style="color:var(--red);font-size:11px;margin-top:10px;text-align:center;display:none"></div>
 </div></div>
@@ -1451,6 +1502,7 @@ function gp(id, btn) {
   btn.classList.add('active');
   if(id==='kanban') loadKanban();
   if(id==='finance') loadFinance();
+  if(id==='habits') loadHabits();
 }
 
 // ═══════════════ DASHBOARD ═══════════════
@@ -2066,6 +2118,138 @@ function addBtn(editorId){
   const ed=g(editorId);const row=document.createElement('div');row.className='ibr';
   row.innerHTML='<input class="fi" placeholder="Текст кнопки" style="flex:1"><input class="fi" placeholder="URL" style="flex:1.5"><button class="ibrm" onclick="this.closest(\'.ibr\').remove()">✕</button>';
   ed.appendChild(row);
+}
+
+// ═══════════════ HABITS ═══════════════
+function loadHabits(){
+  const list = g('habitsList');
+  if(!list) return;
+  const now = new Date();
+  const today = isoDay_(now);
+  const dayMs = 24*3600*1000;
+  const days7 = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date(now.getTime() - i*dayMs);
+    days7.push({ key: isoDay_(d), label: ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'][(d.getDay()+6)%7], n: d.getDate() });
+  }
+
+  let weekDone = 0, weekTarget = 0, todayDone = 0, topStreak = 0;
+  list.innerHTML = HABITS.map(h => {
+    const log = (h._log || []);
+    const map = {};
+    log.forEach(t => { const k = isoDay_(new Date(t)); map[k]=true; });
+    const todayMark = map[today];
+    if(todayMark) todayDone++;
+    const wTarget = Number(h.target_per_week || 7);
+    weekTarget += Math.min(7, wTarget);
+    let wDone = 0;
+    days7.forEach(d => { if(map[d.key]) wDone++; });
+    weekDone += Math.min(wDone, wTarget);
+    if(Number(h.streak||0) > topStreak) topStreak = Number(h.streak||0);
+
+    const dots = days7.map(d => {
+      const filled = map[d.key];
+      const isToday = d.key === today;
+      return `<div class="hdot ${filled?'hd-on':''} ${isToday?'hd-today':''}" title="${d.key}">${d.n}</div>`;
+    }).join('');
+
+    return `
+      <div class="hcard">
+        <div class="hctop">
+          <div class="hcicon">${h.icon||'✅'}</div>
+          <div class="hcmid">
+            <div class="hcname">${escapeHtml(h.name)}</div>
+            <div class="hcstreak">🔥 ${Number(h.streak||0)} · ${wDone}/${wTarget} нед</div>
+          </div>
+          <button class="hctoggle ${todayMark?'on':''}" onclick="toggleHabit(${h.id})">${todayMark?'✓':'·'}</button>
+        </div>
+        <div class="hcdots">${dots}</div>
+        <div class="hcact">
+          <button class="cab cedt" onclick="openHabit(${h.id})">✏️</button>
+          <button class="cab cdel" onclick="deleteHabit(${h.id})">🗑</button>
+        </div>
+      </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:12px;padding:30px 0;text-align:center">Нет привычек. Нажми «＋ Новая».</div>';
+
+  g('haCount').textContent = HABITS.length;
+  g('haToday').textContent = todayDone;
+  g('haTodayMax').textContent = HABITS.length;
+  g('haTopStreak').textContent = topStreak;
+  g('haWeekPct').textContent = weekTarget ? Math.round(100*weekDone/weekTarget) : 0;
+}
+
+function isoDay_(d){
+  const y=d.getFullYear(), m=('0'+(d.getMonth()+1)).slice(-2), dd=('0'+d.getDate()).slice(-2);
+  return y+'-'+m+'-'+dd;
+}
+
+function openHabit(id){
+  if(id){
+    const h = HABITS.find(x=>x.id===id);
+    if(!h) return;
+    g('habit-eid').value = id;
+    g('habit-icon').value = h.icon || '✅';
+    g('habit-name').value = h.name || '';
+    g('habit-target').value = h.target_per_week || 7;
+    g('habit-del-btn').style.display='inline-block';
+  } else {
+    g('habit-eid').value = '';
+    g('habit-icon').value = '✅';
+    g('habit-name').value = '';
+    g('habit-target').value = 7;
+    g('habit-del-btn').style.display='none';
+  }
+  g('ov-habit').style.display='flex';
+}
+
+async function saveHabit(){
+  const eid = parseInt(g('habit-eid').value);
+  const name = g('habit-name').value.trim();
+  const icon = g('habit-icon').value.trim() || '✅';
+  const target = Math.min(7, Math.max(1, parseInt(g('habit-target').value)||7));
+  if(!name){ toast('❌ Введи название'); return; }
+  const d = { name, icon, target_per_week: target, frequency:'daily', archived:false };
+  const r = eid ? await Api.update('habits', eid, d) : await Api.create('habits', d);
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  if(eid){ const i=HABITS.findIndex(x=>x.id===eid); if(i>=0) HABITS[i]=Object.assign({}, HABITS[i], r.item); }
+  else { HABITS.push(r.item); }
+  cls('ov-habit'); loadHabits(); toast('✅ Сохранено');
+}
+
+async function deleteHabit(id){
+  if(!confirm('Удалить привычку и весь её лог?')) return;
+  const r = await Api.remove('habits', id);
+  if(!r.ok){ toast('❌ '+r.error); return; }
+  HABITS = HABITS.filter(h => h.id !== id);
+  loadHabits(); toast('🗑 Удалено');
+}
+
+function deleteHabitFromModal(){
+  const id = parseInt(g('habit-eid').value);
+  if(id){ cls('ov-habit'); deleteHabit(id); }
+}
+
+async function toggleHabit(id){
+  const h = HABITS.find(x=>x.id===id);
+  if(!h) return;
+  const today = isoDay_(new Date());
+  const log = h._log || [];
+  const had = log.some(t => isoDay_(new Date(t)) === today);
+  // optimistic
+  if(had){ h._log = log.filter(t => isoDay_(new Date(t)) !== today); h.streak = Math.max(0, Number(h.streak||0) - 1); }
+  else  { h._log = [...log, new Date().toISOString()]; h.streak = Number(h.streak||0) + 1; }
+  loadHabits();
+
+  const r = await Api.habitToggle(id, today);
+  if(!r.ok){
+    toast('❌ '+r.error);
+    // revert
+    if(had){ h._log.push(new Date(today+'T12:00:00').toISOString()); h.streak = Number(h.streak||0) + 1; }
+    else   { h._log = log; h.streak = Math.max(0, Number(h.streak||0) - 1); }
+    loadHabits();
+    return;
+  }
+  if(r.habit){ Object.assign(h, r.habit); loadHabits(); }
 }
 
 // ═══════════════ THEMES ═══════════════

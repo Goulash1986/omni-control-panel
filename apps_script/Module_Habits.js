@@ -90,5 +90,9 @@ function apiHabitToggle_(body, sess) {
     last_done_at: same ? habit.last_done_at : nowIso_(),
     streak: newStreak,
   });
+  const logs = listAll_(SHEET.HABITS_LOG)
+    .filter(l => Number(l.habit_id) === Number(habit.id))
+    .map(l => l.done_at);
+  updated._log = logs;
   return ok_({ habit: updated, toggled: same ? 'off' : 'on' });
 }

@@ -222,6 +222,16 @@ function apiDelete_(body, sess) {
 }
 
 function apiBootstrap_(sess) {
+  const habits = listAll_(SHEET.HABITS);
+  const hlog = listAll_(SHEET.HABITS_LOG);
+  const logByHabit = {};
+  hlog.forEach(l => {
+    const id = Number(l.habit_id);
+    if (!logByHabit[id]) logByHabit[id] = [];
+    logByHabit[id].push(l.done_at);
+  });
+  habits.forEach(h => { h._log = logByHabit[h.id] || []; });
+
   return ok_({
     categories:    listAll_(SHEET.CATEGORIES),
     posts:         listAll_(SHEET.POSTS),
@@ -230,7 +240,7 @@ function apiBootstrap_(sess) {
     team:          listAll_(SHEET.TEAM),
     inbox:         listAll_(SHEET.INBOX),
     finance:       listAll_(SHEET.FINANCE),
-    habits:        listAll_(SHEET.HABITS),
+    habits:        habits,
     notifications: listAll_(SHEET.NOTIFICATIONS),
     settings: {
       bot_username: getProp_(PROP.BOT_USERNAME),

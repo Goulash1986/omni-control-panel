@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>OMNI Sheets · Превью структуры</title>
+<style>
+  :root{
+    --bg:#f5f5f5; --paper:#fff; --header:#1f1147; --header-fg:#e8e8ff;
+    --grid:#e0e0e0; --text:#222; --muted:#888; --accent:#7c3aed;
+    --green:#137333; --red:#b00020;
+  }
+  body{margin:0;font:14px/1.4 system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);padding:24px;}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;margin:0 0 4px;}
+  .sub{color:var(--muted);margin-bottom:24px;font-size:13px;}
+  .tabs{position:sticky;top:0;background:var(--bg);padding:10px 0;margin-bottom:18px;border-bottom:1px solid #ddd;z-index:5;}
+  .tabs a{display:inline-block;padding:6px 12px;margin:2px 4px 2px 0;background:#fff;border:1px solid #ddd;border-radius:6px;text-decoration:none;color:#333;font-size:12px;font-family:'Space Mono',monospace;}
+  .tabs a:hover{border-color:var(--accent);color:var(--accent);}
+  .sheet{background:var(--paper);border:1px solid #ccc;border-radius:6px;margin-bottom:32px;overflow:auto;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+  .sheet-hdr{background:var(--accent);color:#fff;padding:8px 14px;font-weight:700;display:flex;align-items:center;gap:10px;}
+  .sheet-hdr .pill{background:rgba(255,255,255,.18);padding:2px 8px;border-radius:10px;font-size:11px;}
+  .sheet-hdr .note{margin-left:auto;font-size:11px;font-weight:400;opacity:.9;font-family:'Space Mono',monospace;}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;}
+  th{background:var(--header);color:var(--header-fg);text-align:left;padding:8px 10px;border:1px solid #2a1d5c;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.5px;position:sticky;top:42px;}
+  th .t{display:block;font-size:9px;opacity:.65;margin-top:2px;letter-spacing:1px;}
+  td{padding:7px 10px;border:1px solid var(--grid);vertical-align:top;}
+  tr:nth-child(even) td{background:#fafafa;}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;color:var(--green);}
+  td.neg{color:var(--red);}
+  td.dim{color:var(--muted);font-style:italic;}
+  td.mono{font-family:'Space Mono',monospace;font-size:11px;}
+  td.bool{font-weight:700;}
+  .legend{margin:14px 0 26px;padding:12px 16px;background:#fff8dc;border-left:4px solid #f5b400;border-radius:4px;font-size:12.5px;color:#555;}
+  .legend b{color:#222;}
+  details{margin-bottom:8px;}
+  summary{cursor:pointer;padding:6px;font-weight:600;}
+  .small{font-size:11px;color:var(--muted);font-family:'Space Mono',monospace;}
+</style>
+</head>
+<body>
+
+<h1>OMNI · Превью Google Sheets</h1>
+<div class="sub">Так будут выглядеть листы в твоём Google Sheets после первого запуска <code>setup()</code> в Apps Script. Это не настоящие данные — просто мокап структуры с примерами строк.</div>
+
+<div class="legend">
+  <b>Что это</b>: 15 листов, которые автоматически создаются в одном Google Sheets-документе. Первая строка — заголовки. Цвет шапки — фирменный (`#1f1147`, Space Mono). Можно открыть документ и править значения вручную — бот и панель подхватят изменения. Чего <b>не делать</b>: переименовывать колонки/листы, менять `id`.
+</div>
+
+<div class="tabs">
+  <a href="#Categories">Categories</a>
+  <a href="#Posts">Posts</a>
+  <a href="#Ads">Ads</a>
+  <a href="#Hero">Hero</a>
+  <a href="#Team">Team</a>
+  <a href="#Inbox">Inbox</a>
+  <a href="#Finance">Finance</a>
+  <a href="#Habits">Habits</a>
+  <a href="#HabitsLog">HabitsLog</a>
+  <a href="#Notifications">Notifications</a>
+  <a href="#Settings">Settings</a>
+  <a href="#Auth">Auth</a>
+  <a href="#Sessions">Sessions</a>
+  <a href="#DriveFiles">DriveFiles</a>
+  <a href="#ConvState">ConvState</a>
+</div>
+
+<!-- ───── Categories ───── -->
+<div class="sheet" id="Categories">
+  <div class="sheet-hdr">📁 Categories <span class="pill">5 cols</span> <span class="note">сразу засеваются 6 дефолтных категорий</span></div>
+  <table>
+    <thead><tr><th>id<span class="t">number</span></th><th>name<span class="t">string</span></th><th>icon<span class="t">string</span></th><th>sort_order<span class="t">number</span></th><th>created_at<span class="t">datetime</span></th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td>TikTok</td><td>🎵</td><td class="num">1</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="mono">2</td><td>Instagram</td><td>📸</td><td class="num">2</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="mono">3</td><td>Тирс</td><td>🎯</td><td class="num">3</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="mono">4</td><td>Личная жизнь</td><td>💫</td><td class="num">4</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="mono">5</td><td>Бизнес</td><td>💼</td><td class="num">5</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="mono">6</td><td>Мотивация</td><td>🔥</td><td class="num">6</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Posts ───── -->
+<div class="sheet" id="Posts">
+  <div class="sheet-hdr">📦 Posts <span class="pill">11 cols</span> <span class="note">карточки контента / задачи</span></div>
+  <table>
+    <thead><tr>
+      <th>id</th><th>cat_id</th><th>title</th><th>text</th><th>poster_url</th>
+      <th>buttons<span class="t">json</span></th><th>scheduled_date</th><th>scheduled_time</th>
+      <th>status</th><th>sent_at</th><th>created_at</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td class="mono">748293817400001</td><td class="num">1</td><td>Лайфхак про утро</td>
+        <td>Утренняя рутина за 7 минут — поехали</td>
+        <td class="mono dim">drive.google.com/uc?id=...</td>
+        <td class="mono dim">[{"text":"Подробнее","url":"https://...","clicks":12}]</td>
+        <td class="mono">2026-05-15</td><td class="mono">09:00</td>
+        <td>scheduled</td><td class="dim">—</td><td class="mono dim">2026-05-12T10:42:00Z</td>
+      </tr>
+      <tr>
+        <td class="mono">748293817400002</td><td class="num">2</td><td>Reels: финансовая привычка</td>
+        <td>Откладывай 10% сразу в день получки</td>
+        <td class="dim">—</td><td class="mono dim">[]</td>
+        <td class="dim">—</td><td class="dim">—</td>
+        <td>draft</td><td class="dim">—</td><td class="mono dim">2026-05-12T11:15:00Z</td>
+      </tr>
+      <tr>
+        <td class="mono">748293817400003</td><td class="num">5</td><td>Анонс мероприятия</td>
+        <td>Live-трансляция в субботу</td>
+        <td class="mono dim">drive.google.com/uc?id=...</td><td class="mono dim">[]</td>
+        <td class="mono">2026-05-11</td><td class="mono">19:00</td>
+        <td style="color:var(--green);font-weight:700">sent</td><td class="mono dim">2026-05-11T19:00:00Z</td><td class="mono dim">2026-05-10T08:20:00Z</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Ads ───── -->
+<div class="sheet" id="Ads">
+  <div class="sheet-hdr">💼 Ads <span class="pill">11 cols</span> <span class="note">при status='active' автоматически появляется запись в Finance</span></div>
+  <table>
+    <thead><tr>
+      <th>id</th><th>client</th><th>contact</th><th>text</th><th>poster_url</th>
+      <th>price</th><th>currency</th><th>pub_at</th><th>del_after</th><th>status</th><th>created_at</th>
+    </tr></thead>
+    <tbody>
+      <tr><td class="mono">748293817500001</td><td>Beauty Store</td><td>@beauty_mgr</td><td>Скидки 30% до конца недели</td><td class="mono dim">drive.google.com/uc?id=...</td><td class="num">3500</td><td>UAH</td><td class="mono">2026-05-12T14:00:00Z</td><td class="num">24</td><td style="color:var(--green);font-weight:700">active</td><td class="mono dim">2026-05-12T09:00:00Z</td></tr>
+      <tr><td class="mono">748293817500002</td><td>FitClub</td><td>+380 50 ...</td><td>Запись на тренировки</td><td class="dim">—</td><td class="num">2000</td><td>UAH</td><td class="dim">—</td><td class="num">0</td><td>pending</td><td class="mono dim">2026-05-12T10:30:00Z</td></tr>
+      <tr><td class="mono">748293817500003</td><td>Coffee&amp;Co</td><td>@coffeeco</td><td>Новое меню весна-лето</td><td class="mono dim">drive.google.com/uc?id=...</td><td class="num">1500</td><td>UAH</td><td class="mono">2026-05-08T10:00:00Z</td><td class="num">48</td><td>done</td><td class="mono dim">2026-05-07T18:00:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Hero ───── -->
+<div class="sheet" id="Hero">
+  <div class="sheet-hdr">🌟 Hero <span class="pill">8 cols</span> <span class="note">до 6 активных карточек персонажа</span></div>
+  <table>
+    <thead><tr><th>id</th><th>title</th><th>text</th><th>emoji</th><th>poster_url</th><th>active</th><th>sort_order</th><th>created_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">748293817600001</td><td>Привет, я Алекс</td><td>Контент про продуктивность и финансы</td><td>🚀</td><td class="mono dim">drive.google.com/uc?id=...</td><td class="bool" style="color:var(--green)">TRUE</td><td class="num">1</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="mono">748293817600002</td><td>Чем занимаюсь</td><td>Помогаю запустить свой блог за 30 дней</td><td>💡</td><td class="dim">—</td><td class="bool" style="color:var(--green)">TRUE</td><td class="num">2</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Team ───── -->
+<div class="sheet" id="Team">
+  <div class="sheet-hdr">👥 Team <span class="pill">7 cols</span> <span class="note">первый /start = owner</span></div>
+  <table>
+    <thead><tr><th>id</th><th>tg_user_id</th><th>name</th><th>username</th><th>role</th><th>status</th><th>added_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">748293817700001</td><td class="num">103920773</td><td>Goulash1986</td><td>@goulash1986</td><td style="color:var(--accent);font-weight:700">owner</td><td>active</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="mono">748293817700002</td><td class="num">22334455</td><td>Helper</td><td>@helper</td><td>member</td><td>active</td><td class="mono dim">2026-05-12T12:00:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Inbox ───── -->
+<div class="sheet" id="Inbox">
+  <div class="sheet-hdr">📨 Inbox <span class="pill">7 cols</span> <span class="note">сообщения из ТГ + соцсетей + всё что бот не понял</span></div>
+  <table>
+    <thead><tr><th>id</th><th>source</th><th>from_id</th><th>from_name</th><th>message</th><th>type</th><th>received_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">748293818100001</td><td>telegram</td><td>103920773</td><td>Goulash1986</td><td>Идея: новый ролик про утро</td><td style="color:var(--accent);font-weight:700">unread</td><td class="mono dim">2026-05-12T08:30:00Z</td></tr>
+      <tr><td class="mono">748293818100002</td><td>instagram</td><td>insta_user_42</td><td>maria_k</td><td>Когда новый пост?</td><td>unread</td><td class="mono dim">2026-05-12T09:15:00Z</td></tr>
+      <tr><td class="mono">748293818100003</td><td>tiktok</td><td>tt_user_88</td><td>anonim</td><td>Спам с ссылкой</td><td style="color:var(--red);font-weight:700">warn</td><td class="mono dim">2026-05-12T09:30:00Z</td></tr>
+      <tr><td class="mono">748293818100004</td><td>telegram</td><td>103920773</td><td>Goulash1986</td><td>записал голосовое</td><td>archived</td><td class="mono dim">2026-05-11T22:10:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Finance ───── -->
+<div class="sheet" id="Finance">
+  <div class="sheet-hdr">💰 Finance <span class="pill">10 cols</span> <span class="note">income/expense, авто-привязка к рекламе через ref_id</span></div>
+  <table>
+    <thead><tr><th>id</th><th>kind</th><th>category</th><th>amount</th><th>currency</th><th>note</th><th>ref_kind</th><th>ref_id</th><th>occurred_at</th><th>created_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">748293818800001</td><td style="color:var(--red);font-weight:700">expense</td><td>Еда</td><td class="num neg">500</td><td>UAH</td><td>кофе</td><td>manual</td><td class="dim">—</td><td class="mono dim">2026-05-12T08:42:00Z</td><td class="mono dim">2026-05-12T08:42:00Z</td></tr>
+      <tr><td class="mono">748293818800002</td><td style="color:var(--red);font-weight:700">expense</td><td>Транспорт</td><td class="num neg">220</td><td>UAH</td><td>такси</td><td>manual</td><td class="dim">—</td><td class="mono dim">2026-05-12T09:10:00Z</td><td class="mono dim">2026-05-12T09:10:00Z</td></tr>
+      <tr><td class="mono">748293818800003</td><td style="color:var(--green);font-weight:700">income</td><td>Реклама</td><td class="num">3500</td><td>UAH</td><td>Beauty Store</td><td>ad</td><td class="mono">748293817500001</td><td class="mono dim">2026-05-12T14:00:00Z</td><td class="mono dim">2026-05-12T14:00:00Z</td></tr>
+      <tr><td class="mono">748293818800004</td><td style="color:var(--green);font-weight:700">income</td><td>Зарплата</td><td class="num">25000</td><td>UAH</td><td>март</td><td>manual</td><td class="dim">—</td><td class="mono dim">2026-05-10T12:00:00Z</td><td class="mono dim">2026-05-10T12:00:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Habits ───── -->
+<div class="sheet" id="Habits">
+  <div class="sheet-hdr">✅ Habits <span class="pill">10 cols</span> <span class="note">streak пересчитывается на каждом /done</span></div>
+  <table>
+    <thead><tr><th>id</th><th>name</th><th>icon</th><th>frequency</th><th>target_per_week</th><th>streak</th><th>last_done_at</th><th>archived</th><th>sort_order</th><th>created_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">748293819100001</td><td>Спорт</td><td>🏃</td><td>daily</td><td class="num">5</td><td class="num" style="color:var(--accent)">12</td><td class="mono dim">2026-05-12T07:30:00Z</td><td class="bool" style="color:var(--muted)">FALSE</td><td class="num">1</td><td class="mono dim">2026-04-30T10:00:00Z</td></tr>
+      <tr><td class="mono">748293819100002</td><td>Чтение</td><td>📚</td><td>daily</td><td class="num">7</td><td class="num" style="color:var(--accent)">5</td><td class="mono dim">2026-05-11T22:00:00Z</td><td class="bool" style="color:var(--muted)">FALSE</td><td class="num">2</td><td class="mono dim">2026-04-30T10:00:00Z</td></tr>
+      <tr><td class="mono">748293819100003</td><td>Без сахара</td><td>🍰</td><td>daily</td><td class="num">7</td><td class="num">3</td><td class="mono dim">2026-05-11T21:00:00Z</td><td class="bool" style="color:var(--muted)">FALSE</td><td class="num">3</td><td class="mono dim">2026-05-01T10:00:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── HabitsLog ───── -->
+<div class="sheet" id="HabitsLog">
+  <div class="sheet-hdr">📝 HabitsLog <span class="pill">4 cols</span> <span class="note">каждая отметка = одна строка</span></div>
+  <table>
+    <thead><tr><th>id</th><th>habit_id</th><th>done_at</th><th>note</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">748293819200001</td><td class="mono">748293819100001</td><td class="mono dim">2026-05-12T07:30:00Z</td><td class="dim">—</td></tr>
+      <tr><td class="mono">748293819200002</td><td class="mono">748293819100002</td><td class="mono dim">2026-05-11T22:00:00Z</td><td>30 страниц</td></tr>
+      <tr><td class="mono">748293819200003</td><td class="mono">748293819100001</td><td class="mono dim">2026-05-11T07:45:00Z</td><td class="dim">—</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Notifications ───── -->
+<div class="sheet" id="Notifications">
+  <div class="sheet-hdr">🔔 Notifications <span class="pill">7 cols</span> <span class="note">отображаются в колокольчике панели</span></div>
+  <table>
+    <thead><tr><th>id</th><th>icon</th><th>text</th><th>detail</th><th>channel</th><th>read</th><th>created_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">748293819700001</td><td>📢</td><td>Реклама активирована</td><td>Beauty Store · +3500 UAH</td><td>both</td><td class="bool" style="color:var(--muted)">FALSE</td><td class="mono dim">2026-05-12T14:00:00Z</td></tr>
+      <tr><td class="mono">748293819700002</td><td>📦</td><td>Карточка создана</td><td>Лайфхак про утро</td><td>panel</td><td class="bool" style="color:var(--green)">TRUE</td><td class="mono dim">2026-05-12T10:42:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Settings ───── -->
+<div class="sheet" id="Settings">
+  <div class="sheet-hdr">⚙️ Settings <span class="pill">3 cols</span> <span class="note">key-value хранилище для произвольных настроек</span></div>
+  <table>
+    <thead><tr><th>key</th><th>value</th><th>updated_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">channel_name</td><td>Мой Telegram-канал</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="mono">welcome_text</td><td>Спасибо за подписку!</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Auth ───── -->
+<div class="sheet" id="Auth">
+  <div class="sheet-hdr">🔑 Auth <span class="pill">7 cols</span> <span class="note">одноразовые токены входа (QR), автоудаляются по TTL</span></div>
+  <table>
+    <thead><tr><th>token</th><th>kind</th><th>tg_user_id</th><th>api_key</th><th>created_at</th><th>used_at</th><th>expires_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">A7K2NMQP9W</td><td>qr</td><td class="num">103920773</td><td class="mono dim">omni_4f2c1d8e...</td><td class="mono dim">2026-05-12T10:40:00Z</td><td class="mono dim">2026-05-12T10:42:00Z</td><td class="mono dim">2026-05-12T10:50:00Z</td></tr>
+      <tr><td class="mono">B3PQTVXY7K</td><td>qr</td><td class="dim">—</td><td class="dim">—</td><td class="mono dim">2026-05-12T12:00:00Z</td><td class="dim">—</td><td class="mono dim">2026-05-12T12:10:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── Sessions ───── -->
+<div class="sheet" id="Sessions">
+  <div class="sheet-hdr">🪪 Sessions <span class="pill">6 cols</span> <span class="note">активные сессии браузеров/Mini App (TTL 60 дней)</span></div>
+  <table>
+    <thead><tr><th>api_key</th><th>tg_user_id</th><th>label</th><th>created_at</th><th>last_seen</th><th>revoked</th></tr></thead>
+    <tbody>
+      <tr><td class="mono dim">omni_4f2c1d8e93a14b...</td><td class="num">103920773</td><td>tg-miniapp</td><td class="mono dim">2026-05-12T10:42:00Z</td><td class="mono dim">2026-05-12T15:30:00Z</td><td class="bool" style="color:var(--muted)">FALSE</td></tr>
+      <tr><td class="mono dim">omni_a78bf12c0094...</td><td class="num">103920773</td><td>web-pin</td><td class="mono dim">2026-05-11T18:00:00Z</td><td class="mono dim">2026-05-11T18:30:00Z</td><td class="bool" style="color:var(--red)">TRUE</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── DriveFiles ───── -->
+<div class="sheet" id="DriveFiles">
+  <div class="sheet-hdr">🖼 DriveFiles <span class="pill">8 cols</span> <span class="note">индекс файлов в папке Drive «OMNI-CONTROL Posters»</span></div>
+  <table>
+    <thead><tr><th>id</th><th>file_id</th><th>mime</th><th>kind</th><th>ref_id</th><th>url</th><th>owner_tg</th><th>created_at</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">748293820800001</td><td class="mono dim">1XHwsJyZ...</td><td>image/jpeg</td><td>post</td><td class="mono">748293817400001</td><td class="mono dim">drive.google.com/uc?id=1XHwsJyZ...</td><td class="num">103920773</td><td class="mono dim">2026-05-12T10:42:00Z</td></tr>
+      <tr><td class="mono">748293820800002</td><td class="mono dim">3ZxLpQ8R...</td><td>image/png</td><td>ad</td><td class="mono">748293817500001</td><td class="mono dim">drive.google.com/uc?id=3ZxLpQ8R...</td><td class="num">103920773</td><td class="mono dim">2026-05-12T09:00:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ───── ConvState ───── -->
+<div class="sheet" id="ConvState">
+  <div class="sheet-hdr">💬 ConvState <span class="pill">4 cols</span> <span class="note">состояние диалога с ботом (что бот ждёт следующим сообщением)</span></div>
+  <table>
+    <thead><tr><th>tg_user_id</th><th>state</th><th>data<span class="t">json</span></th><th>updated_at</th></tr></thead>
+    <tbody>
+      <tr><td class="num">103920773</td><td>await_expense</td><td class="mono dim">{}</td><td class="mono dim">2026-05-12T10:00:00Z</td></tr>
+      <tr><td class="num">103920773</td><td>await_post</td><td class="mono dim">{"expecting_poster_kind":"post","expecting_poster_ref":748293817400001}</td><td class="mono dim">2026-05-12T10:30:00Z</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p style="margin-top:40px;color:var(--muted);font-size:11px;text-align:center;font-family:'Space Mono',monospace">
+  Это превью. Настоящие Sheets создадутся в твоём Google-аккаунте, когда ты деплоишь Apps Script и запустишь setup().<br>
+  Полное описание схемы — docs/SHEETS_SCHEMA.md
+</p>
+
+</body>
+</html>

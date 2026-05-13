@@ -22,6 +22,8 @@ function doGet(e) {
     switch (action) {
       case 'ping':
         return ok_({ pong: true, time: nowIso_() });
+      case 'bootstrap':
+        return apiBootstrapInit_();
       case 'auth_qr_create':
         return apiAuthQrCreate_(e);
       case 'auth_qr_check':
@@ -264,6 +266,21 @@ function apiDashboard_(sess) {
 }
 
 // ────────── setup endpoints (вызываются вручную из редактора Apps Script) ──────────
+
+function apiBootstrapInit_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const existing = ss.getSheets().map(s => s.getName());
+  const placeholders = existing.filter(n => n === 'Sheet1' || n === 'Лист1' || n === 'Лист 1');
+  if (existing.length > placeholders.length) {
+    return err_('already_initialized: ' + existing.length + ' sheets exist');
+  }
+  setup();
+  for (const ph of placeholders) {
+    const s = ss.getSheetByName(ph);
+    if (s && ss.getSheets().length > 1) ss.deleteSheet(s);
+  }
+  return ok_({ initialized: true, sheets: ss.getSheets().map(s => s.getName()) });
+}
 
 function setup() {
   ensureSheets_();

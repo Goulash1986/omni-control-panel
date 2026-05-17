@@ -6,7 +6,7 @@
 
 ## КОНТЕКСТ И МИССИЯ
 
-Собери Telegram-бот «Air Guard» — персональный агрегатор информации о воздушных угрозах для одного человека, живущего в Дніпрі, Новокодацький район, ж/м Червоний Камінь, вул. Савкіна 6.
+Собери Telegram-бот «Air Guard» — персональный агрегатор информации о воздушных угрозах для одного человека, живущего в Дніпрі, Новокодацький район, ж/м Червоний Камінь, вул. Савкіна 6, 2 під'їзд, кв. 59, 6 поверх.
 
 **Это life-safety система.** Война в Україні триває, Дніпро регулярно зазнає атак шахедів, крилатих ракет, балістики. Новокодацький район неодноразово був під ударами (підтверджено: жовтень 2024, січень 2026, квітень 2026). Кожна секунда затримки до укриття — це 50 метрів польоту шахеда (180 км/год = 50 м/с).
 
@@ -18,28 +18,32 @@
 1. **Швидкість доставки** > точність аналітики. Краще "є щось підозріле" за 1 сек, ніж точний діагноз за 10 сек.
 2. **Польза** > стилізація. У IMMEDIATE-повідомленнях спочатку дія, потім тепло.
 3. **Чесність** > впевненість. Коли confidence низький — пишемо "можливо", а не "точно".
-4. **Резервування** > економія. Кілька каналів доставки (Telegram + SMS + voice call + мікрофонний детектор).
+4. **Резервування** > економія. Кілька каналів доставки (Telegram + voice call + мікрофонний детектор). _SMS-провайдер запланований архітектурно але вимкнений у v1 (увімкнемо при потребі)._
 5. **Спостережність** > "віримо що працює". Self-watchdog обов'язковий.
 
 ---
 
-## СТЕК
+## СТЕК (verified May 2026)
 
-- Python 3.11+
-- **aiogram 3.x** — відправка повідомлень
-- **Telethon** — читання Telegram-каналів від user-session (у ботів немає доступу до чужих каналів)
-- **anthropic SDK** — Claude Haiku 4.5 для vision-аналізу карт
-- **google-genai SDK** — Gemini 2.5 Flash-Lite для vision (race з Claude)
-- **openai SDK** — TTS для голосових дзвінків
-- **twilio SDK** — голосові дзвінки + SMS (через окремого українського SMS-провайдера TurboSMS)
-- **httpx** — REST API (alerts.in.ua, yasno, open-meteo, NEPTUN)
-- **websockets** — alerts.in.ua WebSocket, Dron Alerts SSE
-- **aiosqlite** — БД (дедуплікація, історія, кеш)
-- **Pillow + staticmap** — рендеринг карт
-- **pydantic v2** — конфіги і типізація
-- **structlog** — JSON-логи
+- **Python 3.13** (production-recommended; 3.14 теж стабільний для нового коду)
+- **uv** (https://docs.astral.sh/uv/) — пакетний менеджер замість pip/poetry, у 10–100 разів швидше
+- **aiogram 3.28.2+** — відправка повідомлень. **Важливо:** прямі kwargs `parse_mode`/`disable_web_page_preview`/`protect_content` для `Bot()` deprecated — використовувати `DefaultBotProperties`
+- **Telethon 1.43.0** — читання Telegram-каналів від user-session. **⚠️ Репозиторій архівований у Feb 2026** — поки що працює, MTProto стабільний, але в v2 планувати міграцію на **Pyrogram** або pure-aiogram
+- **anthropic SDK 0.102.0+** — Claude Haiku 4.5 (`claude-haiku-4-5`) для vision-аналізу карт. **Обов'язково** prompt caching (90% економії на повторюваних system prompts і fixtures)
+- **google-genai 2.3.0+** — Gemini 2.5 Flash-Lite (`gemini-2.5-flash-lite`) для vision race з Claude. **Важливо:** новий пакет, **НЕ** застарілий `google-generativeai`
+- **openai SDK 2.37.0+** — `gpt-4o-mini-tts` для loud notifications (заміна tts-1-hd)
+- **elevenlabs SDK** — для голосу персони "Мишка" (значно краща якість української). Instant Voice Clone або Professional Voice Clone
+- **plivo SDK** — голосові дзвінки на +380 (Twilio в Україні з 2023 не працює для voice)
+- _SMS-провайдер: в v1 не використовуємо. `transport/sms.py` — stub_
+- **httpx[http2] 0.28+** — REST API. HTTP/2 включити через `pip install httpx[http2]` (обов'язково для concurrent calls до alerts.in.ua, DTEK, ElevenLabs)
+- **websockets 13+** — alerts.in.ua WebSocket, Dron Alerts SSE
+- **aiosqlite 0.22.1** — БД (дедуплікація, історія, кеш)
+- **Pillow 12.2.0** + **py-staticmaps** (flopp/py-staticmaps на GitHub) — рендеринг карт. Старий `staticmap` low-maintained, **не використовувати**
+- **pydantic 2.13.3+** — конфіги і типізація
+- **structlog 25.5.0** — JSON-логи
 - **prometheus_client** — метрики латентності
-- **docker-compose** — деплой
+- **age** (https://age-encryption.org) — шифрування backup'ів
+- **docker compose v2** — деплой
 - **pytest + pytest-asyncio** — тести
 
 ---
@@ -141,12 +145,21 @@ air-guard-bot/
 # Tier 1: GOV (officially confirmed, highest confidence)
 gov_sources:
   - name: alerts_in_ua
-    type: websocket
-    url: wss://alerts.in.ua/ws
-    hromada_filter: "Дніпровська міська громада"  # ВЕРИФІКУВАТИ uid
+    type: rest_polling                       # ⚠️ WebSocket НЕ існує у 2026; тільки polling
+    base_url: https://api.alerts.in.ua
+    poll_endpoint: /v1/iot/active_air_raid_alerts_by_oblast.json
+    poll_interval_sec: 30                    # серверний cache TTL ~30s, частіше марно
+    oblast_uid: 9                            # Дніпропетровська область
+    hromada_uid: null                        # ВЕРИФІКУВАТИ через /v1/alerts/active.json при першому старті
     api_token_env: ALERTS_IN_UA_TOKEN
+    auth_method: bearer_header               # Authorization: Bearer <token>
+    sdk: "alerts-in-ua"                      # офіційний Python SDK (AsyncClient)
+    event_types: ["air_raid", "artillery_shelling", "urban_fights", "chemical", "nuclear"]
     tier: gov
     confidence: 0.99
+    rate_limit: "8-10 req/min/IP (soft), 12 hard"
+    # ⚠️ ВАЖЛИВО: alerts.in.ua НЕ розрізняє balistic/UAV/cruise як окремі events!
+    # Балістика та КАБ детектяться ВИКЛЮЧНО через OSINT-канали (Tier 2-3)
   - name: dnipropetrovsk_ova
     type: telegram_channel
     username: "dnipropetrovsk_ova"  # ВЕРИФІКУВАТИ актуальний username
@@ -218,12 +231,17 @@ crowdsourced:
 
 # Context sources (не загрози, контекст)
 context_sources:
-  - name: yasno_blackout
-    type: rest
-    url: https://app.yasno.ua/api/blackout-service/public/
-    region_id: tbd                   # Дніпропетровська
-    dso_id: tbd
+  - name: dtek_yasno_blackout
+    type: rest_polling
+    # YASNO API (undocumented but stable, used by ha-yasno-outages HA integration)
+    # YASNO — це retail-бренд DTEK; покриває Київ І Дніпро
+    primary_url: https://api.yasno.com.ua/api/v1/pages/home/schedule-turn-off-electricity
+    secondary_url: https://app.yasno.ua/api/blackout-service/public/shutdowns/regions/{region_id}/dsos/{dso_id}/planned-outages
+    component: dnipro                # парсимо `components.dnipro.dailySchedule[<queue>]`
+    queue: tbd                       # 1.1 .. 6.2 — УТОЧНИТИ один раз через dtek-dnem.com.ua для вул. Савкіна 6
+    auth: none
     poll_interval_min: 30
+    fallback: text_scrape_dtek_dnem  # https://www.dtek-dnem.com.ua/ua/shutdowns як другий канал
   - name: open_meteo_wind
     type: rest
     url: https://api.open-meteo.com/v1/forecast
@@ -247,7 +265,10 @@ user:
   partner_pet_name: "мишка"
   language_mode: mix                 # факти UA, тепле RU
   home:
-    address: "вул. Савкіна 6, Дніпро"
+    address: "вул. Савкіна 6, кв. 59, Дніпро"
+    entrance: 2
+    apartment: 59
+    floor: 6
     # ЗАДАЧА: при першому запуску геокодувати через Nominatim
     # (https://nominatim.openstreetmap.org/, безкоштовно), кешувати.
     # НЕ хардкодити вслепу.
@@ -480,11 +501,12 @@ async def handle_ballistic_threat(threat):
     """ПАРАЛЕЛЬНО, без очікувань."""
     await asyncio.gather(
         send_telegram_immediate(threat),       # ~500ms
-        send_sms_immediate(threat),            # ~3-5s
-        trigger_voice_call_now(threat),        # ~5-10s
+        send_voice_note_immediate(threat),     # ~1-2s (Telegram .ogg voice message)
+        trigger_voice_call_now(threat),        # ~5-10s (Plivo)
         play_loud_sticker_first(threat),       # ~200ms
         broadcast_to_circle(threat),           # ~1s
         log_metrics(threat),
+        # send_sms_immediate(threat) — DISABLED in v1, uncomment when SMS provider activated
     )
 ```
 
@@ -511,13 +533,14 @@ BALLISTIC_PATTERNS = [
 # (інтегрувати окремою підпискою, треба свій handler)
 ```
 
-**Воєнно-важлива деталь:** alerts.in.ua з 2024 розрізняє типи тривог. Окремо приходять:
-- `alert_started` (загальна повітряна тривога)
-- `ballistic_started` (балістична загроза — окремий, ще терміновіший)
-- `combat_uav_started` (наземні дрони/UAV)
-- `chemical_threat`, `nuclear_threat` (рідко)
+**⚠️ Виправлення по типах подій (verified May 2026):** alerts.in.ua **НЕ розрізняє** ballistic, UAV, cruise як окремі event types. Public API має лише 5 типів:
+- `air_raid` (загальна повітряна тривога)
+- `artillery_shelling`
+- `urban_fights`
+- `chemical`
+- `nuclear`
 
-**Підпишися на ВСІ типи**, окремо обробляй кожен.
+**Висновок:** ballistic/UAV/cruise/KAB granularity ми отримуємо **ВИКЛЮЧНО з OSINT-каналів** (kpszsu, monitor_ukraine, dnipro_alerts), парсячи текст постів. У `pipeline/ballistic_path.py` тригер — це не event від alerts.in.ua, а спрацювання `BALLISTIC_PATTERNS` regex по тексту OSINT-повідомлення з UA-офіційних чи перевірених джерел.
 
 ### Шаблон для балістики
 
@@ -895,15 +918,43 @@ def check_hot(text: str) -> Priority | None:
 
 Викликається **першим** при отриманні будь-якого повідомлення з Telegram. До всього іншого.
 
-### 2. Tier-0 шорткат (alerts.in.ua WebSocket)
+### 2. Tier-0 шорткат (alerts.in.ua REST polling)
 
-WebSocket на `alerts.in.ua` → подія `alert_started` для громади/області → **hardcoded** message без жодної обробки за 0.5 сек:
+**⚠️ Виправлення:** alerts.in.ua **НЕ має WebSocket** (verified May 2026). Використовуємо REST polling.
+
+Polling `/v1/iot/active_air_raid_alerts_by_oblast.json` з інтервалом **30 секунд** (серверний cache TTL = 30s, частіше марно). При першому виявленні `air_raid: true` для oblast UID 9 (Дніпропетровська) → **hardcoded** message без жодної обробки за <500ms:
 
 ```
-🔴 ТРИВОГА. В укриття!
+🔴 ТРИВОГА на Дніпропетровщину. В укриття!
 ```
 
 Далі вже підтягуються деталі з OSINT.
+
+**Polling-діаграма:**
+```python
+async def alerts_in_ua_poller():
+    last_state = False
+    async with httpx.AsyncClient(http2=True, timeout=5.0) as client:
+        while True:
+            t0 = time.monotonic()
+            try:
+                r = await client.get(
+                    f"{BASE}/v1/iot/active_air_raid_alerts_by_oblast.json",
+                    headers={"Authorization": f"Bearer {TOKEN}"}
+                )
+                state = parse_oblast(r.text, oblast_uid=9)
+                if state and not last_state:
+                    await fire_immediate_tier0()  # <<<<< Tier-0 fire
+                elif not state and last_state:
+                    await fire_all_clear()
+                last_state = state
+            except Exception as e:
+                logger.warning("alerts_poll_failed", error=str(e))
+            elapsed = time.monotonic() - t0
+            await asyncio.sleep(max(30 - elapsed, 5))
+```
+
+**⚠️ Latency caveat:** з polling 30s наш Tier-0 може запізнитись до **30 секунд** vs справжня подія. Тому Tier-0 — це **підстраховка**, а основний детект IMMEDIATE йде через **hot path по OSINT-каналах** (фактично 1-3 секунди від публікації постy в каналі).
 
 ### 3. Pre-Alert from Launch Detection (pipeline/pre_alert.py)
 
@@ -1182,26 +1233,39 @@ out geom;
 
 4. Лог: час старту дзвінка, тривалість, status (answered/no-answer/busy/failed).
 
-5. Якщо no-answer 2 рази підряд → SMS backup:
+5. Якщо no-answer 2 рази підряд → **Telegram-повідомлення backup-користувачу** (Мишка):
    ```
-   Ежик не отвечает на звонок. Прилёт возможен в её районе.
+   ⚠️ Ежик не відповіла на дзвінок. Подзвони їй: +380...
+   Остання загроза: {threat_type} над {district}, ETA {eta_min} хв.
    ```
+   _SMS-fallback як ескалація другого ярусу буде додано коли активуємо SMS-провайдер. Поки що Telegram + voice call досить._
 
 ---
 
-## SMS FALLBACK (transport/sms.py)
+## SMS FALLBACK (DISABLED IN v1 — архітектура збережена для майбутнього)
 
-**Provider:** TurboSMS (https://turbosms.ua), баланс поповнюється вручну.
+**Статус:** не використовуємо у v1. Створи `transport/sms.py` як **stub-модуль** з NotImplementedError, але інтерфейс задокументований — щоб коли захочемо увімкнути, не переписувати router.
 
-**Тригери:**
-- IMMEDIATE → SMS паралельно з Telegram (завжди дублюємо)
-- HIGH + немає read_status з Telegram через 30 сек → SMS
-- Повна відмова Telegram (вимк сервера, помилка API) → SMS
+```python
+# src/air_guard/transport/sms.py
+class SMSProvider:
+    """Stub. Активуй коли буде потреба у SMS-fallback.
 
-**Текст SMS:** максимально короткий, без emoji (UCS-2 подвоює символи).
+    Можливі провайдери для +380 (на момент v1 не інтегровано):
+    - TurboSMS (https://turbosms.ua)
+    - SMS Fly (https://sms-fly.ua)
+    - Kyivstar SMS API (для ФОП)
+    """
+    async def send(self, phone: str, text: str) -> None:
+        raise NotImplementedError("SMS disabled in v1")
 ```
-TRYVOGA! Drone -> Chervony Kamin, ~3 min. UKRYTTYA.
-```
+
+**Чому без SMS у v1:**
+- Telegram + voice call (Plivo) + voice message достатньо для primary escalation
+- SMS додає $5/міс і операційні складнощі (баланси, верифікація провайдера)
+- Telegram-канал до Мишки як backup escalation покриває сценарій "ежик не відповіла"
+
+**Коли увімкнути SMS:** якщо буде досвід де Telegram + voice call провалилися одночасно. Тоді — повертаємось і активуємо.
 
 ---
 
@@ -1317,7 +1381,7 @@ contacts:
 
 Логіка:
 - HTTP GET `https://airguard.example.com/healthz` кожні 60 сек
-- Якщо 3 fail підряд → SMS backup-номеру + Telegram повідомлення тобі через **окремого** watchdog-бота (інший токен!)
+- Якщо 3 fail підряд → Telegram повідомлення тобі через **окремого** watchdog-бота (інший токен!) + email через Resend/SendGrid як другий канал
 - Ніколи не використовувати той же токен — якщо процес впав, впав і watchdog
 
 Endpoint `/healthz` в основному боті перевіряє:
@@ -1355,14 +1419,30 @@ OPENAI_API_KEY=
 
 # === Alerts API ===
 ALERTS_IN_UA_TOKEN=
-NEPTUN_API_KEY=          # після отримання
+# NEPTUN_API_KEY=        # NEPTUN не має public API у 2026 (verified May 2026)
+                         # тільки моніторимо їх Telegram-канал як OSINT-джерело
 
-# === Voice & SMS ===
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_FROM_NUMBER=
+# === Voice (Plivo + Sinch active-active для +380) ===
+PLIVO_AUTH_ID=
+PLIVO_AUTH_TOKEN=
+PLIVO_FROM_NUMBER=
+SINCH_SERVICE_PLAN_ID=
+SINCH_API_TOKEN=
+SINCH_FROM_NUMBER=
 TTS_CDN_BASE_URL=        # для розміщення згенерованих mp3
-TURBOSMS_TOKEN=
+
+# === ElevenLabs (опц., для голосу персони "Мишка") ===
+ELEVENLABS_API_KEY=
+ELEVENLABS_VOICE_ID=     # ID склонованого голосу Мишки
+
+# === Карти ===
+STADIAMAPS_API_KEY=
+
+# === DTEK / YASNO електрика ===
+DTEK_YASNO_QUEUE=        # 1.1 .. 6.2 (отримати один раз з dtek-dnem.com.ua/ua/shutdowns)
+
+# === SMS — DISABLED IN v1 ===
+# TURBOSMS_TOKEN=        # активуй коли увімкнеш SMS-fallback
 
 # === Ролі (порожні при першому запуску) ===
 PRIMARY_USER_ID=
@@ -1385,10 +1465,13 @@ LOG_LEVEL=INFO
 
 ## DEPLOYMENT
 
-**VPS:**
-- Основний: **Hetzner Helsinki** або **Falkenstein** (CPX21 ~$10/міс)
-  - ping до Дніпра ~30мс, до Telegram DC ~10мс
-- Watchdog: **окремий провайдер** (Contabo / OVH ~$3/міс)
+**VPS (verified May 2026):**
+- Основний: **Hetzner Falkenstein (FSN1)** — `CAX21` (4 ARM vCPU / 8 GB RAM / 80 GB SSD) ~€7/міс
+  - **Чому Falkenstein, а не Helsinki:** ping до Telegram DC (Amsterdam) ~15–25мс vs ~25–40мс з Helsinki
+  - **Чому CAX21 (ARM), а не x86:** дешевше за core, нам швидкісних single-thread бенчмарків не треба
+  - Альтернатива якщо ARM-сумісність проблема: **CX23** (Intel, 2 vCPU/4 GB) ~€3.49–3.79/міс
+  - **CPX21 deprecated** з 2025 — не існує більше
+- Watchdog: **окремий провайдер** (Contabo / OVH / Vultr — будь-який ≥$3/міс)
 - **НЕ використовувати** AWS US, GCP US (+100мс на хоп)
 
 **systemd:**
@@ -1399,6 +1482,125 @@ RestartSec=2
 ```
 
 **Логи:** journald + ротація. Метрики latency у SQLite.
+
+---
+
+## DTEK / YASNO — ГРАФІК ВІДКЛЮЧЕНЬ ЕЛЕКТРИКИ (ВУЛ. САВКІНА 6)
+
+**Контекст:** під час війни електрика в Україні — це критичний ресурс. Перед знеструмленням ежик має знати точно коли воно почнеться, щоб встигнути зарядити power bank, набрати воду, увімкнути обігрівач, поснідати, відкласти важливі справи. Це **не загроза життю**, але дуже впливає на якість і стресовість дня.
+
+### Архітектура
+
+**Провайдер:** YASNO — retail-бренд DTEK Group; покриває і Київ, і Дніпро.
+**Регіональний DSO для адреси Савкіна 6:** ДТЕК Дніпровські Електромережі (DTEK Dnem).
+**Система чергування:** 6 основних черг (1, 2, 3, 4, 5, 6), розбитих на підчерги (1.1, 1.2, ..., 6.1, 6.2 — всього ~12).
+
+### One-time setup: дізнатись чергу для Савкіна 6
+
+**ЦЕ робиться один раз руками** при налаштуванні бота:
+
+1. Перейти на https://www.dtek-dnem.com.ua/ua/shutdowns
+2. У формі пошуку: місто `Дніпро` → район `Новокодацький` → вулиця `Савкіна` → будинок `6`
+3. Сторінка покаже чергу (наприклад `3.2`) — записати у `config/user.yaml`:
+   ```yaml
+   utilities:
+     dtek_yasno_queue: "3.2"     # отримане з dtek-dnem.com.ua/ua/shutdowns
+   ```
+
+**Альтернатива:** Telegram-бот `@DTEKDniprovskiElektromerezhiBot` (після реєстрації з особовим рахунком) повертає чергу автоматично.
+
+### Polling implementation
+
+```python
+# src/air_guard/ingest/yasno_blackout.py
+YASNO_API = "https://api.yasno.com.ua/api/v1/pages/home/schedule-turn-off-electricity"
+
+async def fetch_dnipro_schedule(queue: str) -> list[OutageWindow]:
+    """Returns list of {start, end, type} for today and tomorrow."""
+    async with httpx.AsyncClient(http2=True, timeout=10.0) as c:
+        r = await c.get(YASNO_API)
+        data = r.json()
+    component = data["components"]["dnipro"]
+    daily = component["dailySchedule"].get(queue, {})
+    windows = [
+        OutageWindow(
+            start=parse_dt(entry["start"]),
+            end=parse_dt(entry["end"]),
+            type=entry.get("type", "DEFINITE_OUTAGE"),
+        )
+        for date_key in ("today", "tomorrow")
+        for entry in daily.get(date_key, [])
+    ]
+    return windows
+```
+
+**Polling:** кожні 30 хвилин. Кеш — у БД, з timestamp `fetched_at`. Якщо API >2 годин не оновлюється → попередження у `/digest` "графік DTEK не оновлюється, дані можуть бути застарілі".
+
+### Fallback: text-scrape DTEK Dnem
+
+Якщо YASNO API мовчить >2 години (а це буває під час масованих обстрілів):
+
+```python
+# src/air_guard/ingest/dtek_dnem_scrape.py
+DTEK_DNEM_URL = "https://www.dtek-dnem.com.ua/ua/shutdowns"
+
+async def scrape_dtek_dnem_for_queue(queue: str, address: str) -> list[OutageWindow]:
+    """Парсимо HTML — крихкий метод, тільки як fallback."""
+    async with httpx.AsyncClient(timeout=15.0,
+        headers={"User-Agent": "Mozilla/5.0 (AirGuard fallback)"}) as c:
+        r = await c.get(DTEK_DNEM_URL)
+    # парсимо BeautifulSoup, шукаємо row для нашої черги
+    ...
+```
+
+### Сповіщення про блекаут
+
+**Шаблони (bot/templates.py):**
+
+`blackout_30min.j2` (30 хв до початку):
+```
+⚡ Через 30 хв вимикають світло, ежик
+{{ start_time }} — {{ end_time }} (~{{ duration_h }} год)
+Встигни зарядити телефон, набрати воду, налити чай. — М. 🐻
+```
+
+`blackout_5min.j2` (5 хв до початку):
+```
+⚡ Через 5 хв світло вимкнуть.
+Якщо щось зараз готується — допивай каву, заваривай чайник.
+Я тут (у мене дизель). — М.
+```
+
+`blackout_ended.j2`:
+```
+💡 Світло повернулось 🎉
+Прокладаюся з графіком — наступне вимкнення о {{ next_start }}.
+— М.
+```
+
+`blackout_schedule_changed.j2` (графік раптово оновився):
+```
+⚡ Ежик, графік змінили!
+Раніше було {{ old_window }}, тепер: {{ new_window }}.
+Перенесла планувальник. — М.
+```
+
+### Команди
+
+- `/svitlo` — поточний статус (зараз є / немає) + найближче вимкнення
+- `/svitlo_today` — повний графік на сьогодні і завтра у вигляді timeline
+- `/svitlo_diff` — що змінилось у графіку за останні 24 години
+
+### Інтеграція з повітряними тривогами
+
+Якщо під час IMMEDIATE event є плановий блекаут протягом 30 хв — додаємо до тексту:
+```
+⚠️ Через {{ X }} хв вимкнуть світло. Зайди в укриття з повербанком і ліхтариком.
+```
+
+### Бюджет
+
+YASNO API безкоштовний, polling раз на 30 хв — це 48 req/день, копіївки трафіку.
 
 ---
 
@@ -1436,24 +1638,58 @@ def detect_shahed_variant(text: str) -> ShahedVariant:
 ETA: всього ~{eta_min} хв. Зараз у ванну. — М.
 ```
 
-### Voice провайдер для +380 — НЕ Twilio
+### Voice провайдер для +380 — Plivo + Sinch active-active (verified May 2026)
 
-Twilio з 2023 практично припинив надавати voice до українських номерів через регулятивні обмеження. **Не використовуй Twilio для дзвінків в Україну.**
+| Провайдер | UA mobile outbound | Особливості |
+|---|---|---|
+| **Plivo** | **$0.3930/хв** per-minute billing | Може бути disabled by default у Geo Permissions нового акаунта — увімкнути вручну у Console → Voice → Geo Permissions |
+| **Sinch** | Pricing у консолі | 190+ destinations, UA підтверджена, recommended primary alt |
+| **Infobip** | Pricing у консолі | Історично сильні у Східній Європі |
+| **Twilio** | Може працювати у 2026 — потрібен **empirical test** | До 2024 community reports про degradation, у поточному UA Voice Guidelines значиться "Outbound: Yes". **Не закладай Twilio як заздалегідь робочий — протестуй.** |
+| **Vonage** | Через консоль | Працює, цінник посередній |
 
-**Робочі альтернативи** (перевір актуально на день інтеграції):
-- **Plivo** (https://plivo.com) — стабільно термінує +380, API схожий на Twilio, $0.05-0.10/хв
-- **Sinch** (https://sinch.com) — глобальний провайдер, працює з UA
-- **Vonage / Nexmo** (https://www.vonage.com) — теж робочий
-- **Twilio для SMS** — досі працює, дзвінки — ні
+**Архітектура для life-safety:** **active-active Plivo + Sinch** (або Plivo + Infobip). При IMMEDIATE дзвінок іде паралельно через обидва провайдери — хто перший підняв трубку, того лічимо як answered. Це дорожче, але гарантує доставку при збою одного.
 
-Альтернатива дзвінкам: **Telegram Voice Note** через ботa — це насправді audio file message, але на iOS показує duration в push, ефект подібний до дзвінка. Якщо primary не відповіла на text — шлемо voice message з тривогою (5-секундна сирена + TTS).
+```python
+# src/air_guard/transport/voice_call.py
+async def trigger_voice_call_now(threat: Threat):
+    tts_url = await prepare_tts_url(threat)
+    plivo_task = asyncio.create_task(plivo_call(PRIMARY_PHONE, tts_url))
+    sinch_task = asyncio.create_task(sinch_call(PRIMARY_PHONE, tts_url))
+    done, pending = await asyncio.wait(
+        [plivo_task, sinch_task],
+        return_when=asyncio.FIRST_COMPLETED,
+        timeout=45,
+    )
+    for t in pending:
+        t.cancel()
+    answered = next((r.result() for r in done
+                     if isinstance(r.result(), AnsweredResult)), None)
+    if not answered:
+        await escalate_to_backup_telegram(threat)
+```
 
-`.env` оновити:
+**Перед production обов'язково:**
+1. У Plivo Console → Voice → Geo Permissions → перевірити `Ukraine: Enabled`
+2. Зробити 50–100 тестових дзвінків через Plivo + Sinch на всі три UA-MNO:
+   - **Kyivstar:** 067/068/096/097/098
+   - **Vodafone:** 050/066/095/099
+   - **Lifecell:** 063/073/093
+3. Виміряти ASR (Answer-Seizure Ratio), PDD (Post-Dial Delay), audio quality MOS
+4. Якщо Twilio у тесті покажеться робочим і дешевим — додати як третій канал
+
+**Реальний бюджет:** 30 дзвінків × 30 сек × 2 провайдери = **~$12/міс** (Plivo per-minute billed up to 60 sec mins).
+
+Альтернатива дзвінкам як паралельний канал: **Telegram Voice Note** через бота — audio file message, на iOS показує duration в push, vibrate gives feel of incoming call. **Безкоштовно.** Йде паралельно з реальним дзвінком — навіть якщо Plivo + Sinch обидва впали, на Watch прилетить vibrate-нотифікація.
+
+`.env`:
 ```
 PLIVO_AUTH_ID=
 PLIVO_AUTH_TOKEN=
 PLIVO_FROM_NUMBER=
-# Twilio залишається для SMS на не-UA номерів, якщо потрібно
+SINCH_SERVICE_PLAN_ID=
+SINCH_API_TOKEN=
+SINCH_FROM_NUMBER=
 ```
 
 ### Apple Critical Alerts — обмеження
@@ -1486,23 +1722,25 @@ iOS має `UNNotificationInterruptionLevel.critical` що обходить Do N
 
 `tile.openstreetmap.org` має tile usage policy: max ~1 req/sec, для особистого використання OK, але **рендерити карти кожні 5 секунд × 8 тайлів** перевищить ліміт за годину.
 
-Рішення:
-- **MapTiler** (https://www.maptiler.com) — free tier 100K tiles/міс, нам вистачить, $25/міс якщо більше
-- **Mapbox** (https://www.mapbox.com) — free 50K, $0.6/1000 tiles після
-- **Stadia Maps** (https://stadiamaps.com) — від $20/міс
-- **Self-host через TileServer-GL** + регіональний дамп ~5GB — складніше але безкоштовно
+Рішення (verified May 2026, у порядку рекомендації):
+- **Stadia Maps** (https://stadiamaps.com) — **рекомендовано для нашого профілю**: perpetual free dev plan з місячним кредитом, без картки, privacy-first, MapLibre drop-in, EU endpoint. Нам ~5000 тайлів/міс — вкладемось у free
+- **MapTiler Cloud** (https://www.maptiler.com) — free tier 100K map loads/міс, без картки. Backup-варіант якщо Stadia не зайде
+- **Mapbox** (https://www.mapbox.com) — 50K free, $5 за 1K overage, потрібна картка
+- **Self-host через TileServer-GL** + регіональний дамп Україна (~5GB) — складніше але безкоштовно і повна приватність
 
 В `bot/map_renderer.py`:
 ```python
 TILE_URL = os.getenv("TILE_URL",
-    "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={key}")
+    "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png?api_key={key}")
 ```
 
 `.env`:
 ```
-MAPTILER_API_KEY=
-TILE_URL=https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER_API_KEY}
+STADIAMAPS_API_KEY=
+TILE_URL=https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}.png?api_key=${STADIAMAPS_API_KEY}
 ```
+
+**Чому dark тема:** alert-карти мають високий контраст (червоні маркери загроз на темному фоні), краще читаються вночі без сліпучого ефекту, узгоджуються з Telegram dark mode яким ежик користується.
 
 Кеш на стороні бота: 7 днів TTL, бо тайли практично не змінюються.
 
@@ -1512,12 +1750,12 @@ TILE_URL=https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER
 ```yaml
 address_details:
   building: "вул. Савкіна, 6"
-  entrance: 3                  # під'їзд
-  floor: 5                     # поверх
-  apartment: 47                # номер квартири
-  intercom_code: "47К"         # код домофону
-  building_color: "червона цегла"
-  landmarks_visible: "ТРЦ Караван видно з вікна, ліворуч"
+  entrance: 2                  # під'їзд
+  floor: 6                     # поверх
+  apartment: 59                # номер квартири
+  intercom_code: "59К"         # код домофону (УТОЧНИТИ у ежика)
+  building_color: ""           # УТОЧНИТИ у ежика
+  landmarks_visible: ""        # УТОЧНИТИ у ежика — що видно з вікна (для emergency dispatch)
   emergency_contacts:
     starshyna: "+380..."        # старший по дому
     neighbour_emergency: "+380..."
@@ -1526,9 +1764,8 @@ address_details:
 
 В /sos карта показує квартиру з підписом:
 ```
-📍 вул. Савкіна 6, під'їзд 3, 5 поверх, кв. 47
-Код домофону: 47К
-Червона цегла, видно ТРЦ "Караван"
+📍 вул. Савкіна 6, під'їзд 2, 6 поверх, кв. 59
+Код домофону: 59К
 ```
 
 Це дозволяє швидкому пожежі/швидкій знайти точне місце без розпитувань.
@@ -1712,6 +1949,86 @@ dependents:
 
 ---
 
+## SDK НОТАТКИ (verified May 2026)
+
+### alerts.in.ua — використовуй офіційний SDK
+
+```python
+# pip install alerts-in-ua
+from alerts_in_ua import AsyncClient
+
+client = AsyncClient(token=os.getenv("ALERTS_IN_UA_TOKEN"))
+alerts = await client.get_active_alerts()
+# alerts — список об'єктів з полями: location_uid, location_title,
+# location_type, alert_type, started_at, updated_at, ...
+```
+
+Не пиши свій HTTP-клієнт — у SDK вже є retry, rate-limit handling, парсинг.
+
+**При першому старті:** виклич `get_active_alerts()`, виведи всі унікальні `location_title` для Дніпропетровської області, знайди UID для `"Дніпровська міська територіальна громада"`. Запиши у конфіг.
+
+### anthropic — обов'язково prompt caching
+
+90% економії на input tokens для повторюваних system prompts і vision examples:
+```python
+import anthropic
+client = anthropic.AsyncAnthropic()
+response = await client.messages.create(
+    model="claude-haiku-4-5",
+    max_tokens=1024,
+    system=[{
+        "type": "text",
+        "text": LONG_VISION_INSTRUCTIONS,
+        "cache_control": {"type": "ephemeral"}    # <<<< кешуємо
+    }],
+    messages=[{
+        "role": "user",
+        "content": [
+            {"type": "image", "source": {...}},
+            {"type": "text", "text": "Витягни локації з цієї карти"}
+        ]
+    }]
+)
+```
+
+### google-genai vs google-generativeai
+
+```python
+# ✅ Новий, актуальний
+from google import genai
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+response = await client.aio.models.generate_content(
+    model="gemini-2.5-flash-lite",
+    contents=[image, "Витягни локації з цієї карти"]
+)
+
+# ❌ Старий пакет — НЕ використовуй для нового коду
+# import google.generativeai as genai
+```
+
+### aiogram — DefaultBotProperties
+
+```python
+# ✅ Правильно у 3.28+
+from aiogram import Bot
+from aiogram.client.default import DefaultBotProperties
+bot = Bot(
+    token=BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode="HTML")
+)
+
+# ❌ Deprecated, з 3.10+
+# bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
+```
+
+### Telethon — план міграції
+
+Telethon GitHub-репо архівований у Feb 2026. Для v1 продовжуємо використовувати (MTProto стабільний, функціонал є), але:
+- Веди список використовуваних Telethon-фіч у `docs/telethon_migration_plan.md`
+- У v2 (3-6 місяців) мігруй на Pyrogram (https://docs.pyrogram.org/) або, якщо вистачить, на чисто bot-API через aiogram (без user-session, але без читання чужих каналів)
+
+---
+
 ## ВЕРИФІКАЦІЯ ДЖЕРЕЛ (2025–2026)
 
 Перед першим production-запуском перевір що канали активні та слідкуй за актуальністю списків. Канали в Україні мігрують, банять, ребрендуються постійно.
@@ -1731,21 +2048,33 @@ dependents:
 
 ---
 
-## ОПЕРАЦІЙНИЙ БЮДЖЕТ (~$45–55/міс)
+## ОПЕРАЦІЙНИЙ БЮДЖЕТ (verified May 2026, ~$43–48/міс recurring у v1)
 
-- VPS Hetzner CPX21 (Helsinki): ~$10
-- Watchdog VPS (Contabo): ~$4
-- Anthropic Haiku 4.5 (vision ~3000 img/міс): ~$8
-- Gemini 2.5 Flash-Lite (parallel race): ~$3
-- OpenAI TTS (~30 дзвінків): ~$1
-- **Plivo voice** для +380 (~30 дзвінків × 30 сек): ~$5
-- TurboSMS (~200 SMS): ~$5
-- Telegram bot API: $0
-- MapTiler tiles (для динамічних карт): $0 free tier (до 100K/міс) або $25
-- Backblaze B2 (backups, ~5GB): ~$0.50
-- Custom стікер-пак (one-time, генерація): ~$30 одноразово (Lottie) або $50-200 (custom AE)
-- Apple Watch eSIM для ежика (опціонально): ~$5/міс
-- Spare phone у укритті (one-time): ~$120
+| Сервіс | Деталі | Місячно |
+|---|---|---|
+| **Hetzner CAX21** (Falkenstein, 4 ARM vCPU / 8GB) | основний бот | €7 ≈ $7.50 |
+| Watchdog VPS (Contabo / Vultr) | окремий провайдер | ~$4 |
+| **Anthropic Haiku 4.5** | vision ~3000 img/міс, з prompt caching | ~$5 |
+| **Gemini 2.5 Flash-Lite** | parallel race з Claude | ~$3 |
+| **OpenAI gpt-4o-mini-tts** | для дзвінків (~30/міс) | ~$1 |
+| **ElevenLabs Starter** (опц.) | голос персони "Мишка" українською | ~$5 |
+| **Plivo + Sinch active-active voice** | 30 дзв. × 30 сек × 2 провайд. × $0.39/хв | ~$12 |
+| Telegram Bot API | — | $0 |
+| **Stadia Maps** | ~5K тайлів/міс, free dev plan | $0 |
+| **Backblaze B2** | encrypted backups, ~5GB | ~$0.50 |
+| **СУМАРНО recurring (з ElevenLabs)** | | **~$43–48/міс** |
+| **СУМАРНО recurring (без ElevenLabs)** | | **~$38–42/міс** |
+| ~~SMS~~ | DISABLED у v1 | $0 |
+
+**One-time:**
+- Custom sticker pack (Lottie + конвертер): ~$30
+- Spare phone у укритті (старий iPhone/Nokia): ~$120
+- Apple Watch eSIM для ежика (опц.): ~$5/міс
+
+**Знижки бюджету:**
+- Якщо OpenAI TTS вистачає — економимо $5/міс на ElevenLabs
+- Якщо Plivo only (без Sinch failover) — економимо ~$6, але втрачаємо failover-гарантію
+- Якщо self-host tiles — економимо $0 (Stadia free), але +складність
 
 ---
 
@@ -1772,7 +2101,7 @@ dependents:
 2. Config-моделі (pydantic) + завантажувач + словник локацій
 3. Geo-модуль: геокодинг, резолв аліасів, релевантність. Тести.
 4. text_parser з patterns для УСІХ типів загроз (shahed, cruise, ballistic, kab, kinzhal) + deduplicator
-5. alerts.in.ua WebSocket з ПІДПИСКОЮ НА ВСІ типи (alert_started, ballistic_started, combat_uav_started)
+5. alerts.in.ua REST polling (немає WebSocket у 2026; ballistic/UAV granularity тільки через OSINT regex)
 6. aiogram бот з командами + sender + formatter з шаблонами для всіх типів
 7. Telethon-reader (поки фейк-обробник)
 8. Hot path + **окремий ballistic_path** з тестами латентності
@@ -1790,7 +2119,7 @@ dependents:
 **Week 3: Resilience + Voice**
 17. Voice call (OpenAI TTS + Twilio) з **диференційованими затримками за типом**
 18. Голосові повідомлення (.ogg) у самому alert для CRITICAL
-19. SMS fallback (TurboSMS)
+19. Telegram voice messages (.ogg) для CRITICAL — заміна SMS у v1 як другий канал
 20. Inline keyboard + callback handlers + auto-reactions
 21. Self-watchdog (окремий проект `watchdog/`)
 22. Check-in logic + escalation

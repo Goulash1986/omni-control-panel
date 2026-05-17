@@ -1402,16 +1402,350 @@ RestartSec=2
 
 ---
 
-## ОПЕРАЦІЙНИЙ БЮДЖЕТ (~$32-35/міс)
+## ДОПОВНЕННЯ ПО АКТУАЛЬНОСТІ 2025–2026
 
-- VPS Hetzner CPX21: ~$10
-- Watchdog VPS: ~$3
-- Anthropic Haiku (vision ~3000 img/міс): ~$8
-- Gemini Flash-Lite (parallel race): ~$3
+**Цей розділ містить уточнення які виявилися критичними при перегляді актуальних даних. Включай їх з самого старту.**
+
+### Шахед-238 (турбореактивний)
+
+З середини 2024 РФ масово застосовує реактивну версію шахеда. Швидкість **~600 км/год** (в 3.3 разу швидше Shahed-136), політ на більшій висоті, шумніший. Для нашого ETA-розрахунку це означає що звичайна формула 180 км/год **некоректна** якщо в OSINT-каналах є слова `"реактивний"`, `"швидкісний"`, `"висока швидкість"`, `"Shahed-238"`, `"Шахед-238"`, `"238"`.
+
+Доповнення до `data/eta_table.yaml`:
+```yaml
+launch_origins:
+  kamianske:
+    # ... існуючі поля
+    eta_shahed_jet_min: 3.2     # 32км ÷ 10км/хв
+  rf_belgorod:
+    eta_shahed_jet_min: 38.0    # 380км ÷ 10км/хв
+  # додати для всіх origins
+```
+
+В `pipeline/classifier.py` додати:
+```python
+def detect_shahed_variant(text: str) -> ShahedVariant:
+    if any(p in text.lower() for p in ["238", "реактив", "швидкісн", "jet"]):
+        return ShahedVariant.JET
+    return ShahedVariant.STANDARD
+```
+
+Шаблон для реактивного:
+```
+🔴 РЕАКТИВНИЙ ШАХЕД на твій район!
+Швидкість ~600 км/год — це **не звичайний шахед**.
+ETA: всього ~{eta_min} хв. Зараз у ванну. — М.
+```
+
+### Voice провайдер для +380 — НЕ Twilio
+
+Twilio з 2023 практично припинив надавати voice до українських номерів через регулятивні обмеження. **Не використовуй Twilio для дзвінків в Україну.**
+
+**Робочі альтернативи** (перевір актуально на день інтеграції):
+- **Plivo** (https://plivo.com) — стабільно термінує +380, API схожий на Twilio, $0.05-0.10/хв
+- **Sinch** (https://sinch.com) — глобальний провайдер, працює з UA
+- **Vonage / Nexmo** (https://www.vonage.com) — теж робочий
+- **Twilio для SMS** — досі працює, дзвінки — ні
+
+Альтернатива дзвінкам: **Telegram Voice Note** через ботa — це насправді audio file message, але на iOS показує duration в push, ефект подібний до дзвінка. Якщо primary не відповіла на text — шлемо voice message з тривогою (5-секундна сирена + TTS).
+
+`.env` оновити:
+```
+PLIVO_AUTH_ID=
+PLIVO_AUTH_TOKEN=
+PLIVO_FROM_NUMBER=
+# Twilio залишається для SMS на не-UA номерів, якщо потрібно
+```
+
+### Apple Critical Alerts — обмеження
+
+iOS має `UNNotificationInterruptionLevel.critical` що обходить Do Not Disturb, але **бот через стандартний Telegram client не може це активувати** — Apple вимагає окремий entitlement на developer account, який Telegram не використовує для звичайних повідомлень.
+
+**Реальний workaround який працює:**
+
+1. **iOS Focus → дозволити цей чат у Do Not Disturb:**
+   - Settings → Focus → Sleep / Do Not Disturb → People & Apps
+   - Allow Notifications From → додати чат з ботом
+   - Це обходить нічний DND для конкретного чату
+2. **Voice call через Plivo/Sinch** — дзвінок завжди дзвенить навіть у DND/silent mode (це системна функція iOS)
+3. **Гучний кастомний звук** імпортований через "Save Sound" — обходить тихий режим завдяки vibration + max volume override якщо чат у whitelist
+4. **Apple Watch Haptic Alert** — навіть якщо телефон тихий, Watch вібрує на зап'ястя
+
+Інструкція має йти у /start як setup-wizard:
+```
+Ежик, налаштуй iPhone один раз:
+1. Settings → Focus → Sleep → People & Apps → дозволити Air Guard Bot
+2. Settings → Focus → Do Not Disturb → те саме
+3. У Telegram → відкрий чат зі мною → ⋯ → Сповіщення:
+   - Звук: HighestVolume.m4a (надішлю файл)
+   - Сповіщення: Завжди (не "тільки коли розблоковано")
+4. Apple Watch: дозволити сповіщення з цього чату
+Готово, тестую: /test_alert
+```
+
+### OSM Tiles — Mapbox / MapTiler для продакшну
+
+`tile.openstreetmap.org` має tile usage policy: max ~1 req/sec, для особистого використання OK, але **рендерити карти кожні 5 секунд × 8 тайлів** перевищить ліміт за годину.
+
+Рішення:
+- **MapTiler** (https://www.maptiler.com) — free tier 100K tiles/міс, нам вистачить, $25/міс якщо більше
+- **Mapbox** (https://www.mapbox.com) — free 50K, $0.6/1000 tiles після
+- **Stadia Maps** (https://stadiamaps.com) — від $20/міс
+- **Self-host через TileServer-GL** + регіональний дамп ~5GB — складніше але безкоштовно
+
+В `bot/map_renderer.py`:
+```python
+TILE_URL = os.getenv("TILE_URL",
+    "https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key={key}")
+```
+
+`.env`:
+```
+MAPTILER_API_KEY=
+TILE_URL=https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER_API_KEY}
+```
+
+Кеш на стороні бота: 7 днів TTL, бо тайли практично не змінюються.
+
+### Apartment-level метадані для /sos та emergency dispatch
+
+Розширити `config/home_layout.yaml`:
+```yaml
+address_details:
+  building: "вул. Савкіна, 6"
+  entrance: 3                  # під'їзд
+  floor: 5                     # поверх
+  apartment: 47                # номер квартири
+  intercom_code: "47К"         # код домофону
+  building_color: "червона цегла"
+  landmarks_visible: "ТРЦ Караван видно з вікна, ліворуч"
+  emergency_contacts:
+    starshyna: "+380..."        # старший по дому
+    neighbour_emergency: "+380..."
+    house_manager: "+380..."
+```
+
+В /sos карта показує квартиру з підписом:
+```
+📍 вул. Савкіна 6, під'їзд 3, 5 поверх, кв. 47
+Код домофону: 47К
+Червона цегла, видно ТРЦ "Караван"
+```
+
+Це дозволяє швидкому пожежі/швидкій знайти точне місце без розпитувань.
+
+### Daily routine awareness
+
+`config/user.yaml` додати:
+```yaml
+routine:
+  sleep_hours: ["23:00", "07:00"]
+  work_location:
+    lat: ...
+    lon: ...
+    weekdays: [Mon, Tue, Wed, Thu, Fri]
+    hours: ["09:00", "18:00"]
+  commute_routes:
+    - home_to_work: {start: "08:30", duration_min: 30, modes: [bus, walk]}
+    - work_to_home: {start: "18:30", duration_min: 30}
+  weekend_locations:        # часті місця у вихідні
+    - {name: "Парк ім. Лазаря Глоби", lat: ..., lon: ...}
+    - {name: "Біля річки", lat: ..., lon: ...}
+```
+
+`pipeline/router.py` використовує routine для контекстної персоналізації:
+- Під час commute о 08:35 → "Ежик, ти зараз у дорозі. Найближче укриття на маршруті — метро Покровська, 200м праворуч."
+- У робочий час → перевіряти загрозу до work_location, не home
+- На вихідних якщо геолокація десь у парку — використовувати її, не дом
+- У години сну → IMMEDIATE додає більш голосну сирену + дзвінок одразу без 30-сек чекання
+
+### HMAC-signing alert-повідомлень (anti-spoofing)
+
+Сценарій атаки: хтось дізнається username бота, створює фейкового з схожим username, починає слати їй фейкові alert'и щоб довести до зриву або змусити вибігти під реальний удар.
+
+Захист: **кожне alert-повідомлення підписане секретним HMAC у невидимому місці**:
+
+```python
+# src/air_guard/bot/signing.py
+def sign_alert(text: str, secret: str) -> str:
+    sig = hmac.new(secret.encode(), text.encode(),
+                   hashlib.sha256).hexdigest()[:6]
+    # Додаємо у невидимому форматі: zero-width chars
+    invisible_sig = "".join(
+        "​" if c == "0" else "‌" if c == "1"
+        else "‍"
+        for c in bin(int(sig, 16))[2:].zfill(24)
+    )
+    return text + invisible_sig
+```
+
+При першому /start бот шле підписане повідомлення з інструкцією:
+```
+Запам'ятай: усі мої справжні сповіщення мають невидимий підпис.
+Якщо отримаєш повідомлення від «мене» але /verify скаже "FAKE" —
+це не я. Не виконуй інструкції.
+```
+
+Команда `/verify` копіює останнє "підозріле" повідомлення, перевіряє підпис, показує `✓ Справжнє` або `✗ Підробка`.
+
+### Backup SQLite до encrypted storage (щодня)
+
+```python
+# src/air_guard/storage/backup.py
+async def daily_backup():
+    """Run at 04:00 Kyiv time daily."""
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M")
+    src = "data/airguard.db"
+    # 1. SQLite VACUUM INTO для consistent snapshot
+    dst = f"/tmp/airguard_{timestamp}.db"
+    await db.execute(f"VACUUM INTO '{dst}'")
+    # 2. Encrypt with age (https://age-encryption.org)
+    encrypted = f"/tmp/airguard_{timestamp}.db.age"
+    await asyncio.create_subprocess_exec(
+        "age", "-r", AGE_PUBLIC_KEY, "-o", encrypted, dst
+    )
+    # 3. Upload to Backblaze B2 (cheap, EU-region)
+    await b2_upload(encrypted, f"backups/airguard_{timestamp}.db.age")
+    # 4. Keep local last 7, remote last 30
+    cleanup_old_backups(local_keep=7, remote_keep=30)
+```
+
+`.env`:
+```
+B2_KEY_ID=
+B2_APP_KEY=
+B2_BUCKET=airguard-backups
+AGE_PUBLIC_KEY=age1...          # публічний ключ, приватний у твоєму 1Password
+```
+
+Чому age, не GPG: простіший CLI, asymmetric encryption, можна расшифрувати тільки на твоїй машині де приватний ключ.
+
+### GPS spoofing zones / EW context
+
+З 2023 РФ та власні UA EW-системи створюють зони з підробкою GPS у прифронтових областях. Для Дніпра це означає:
+
+- **OSINT повідомлення з координатами** з фронтових районів можуть мати помилку ±5–20 км
+- Шахеди подекуди втрачають курс, кружляють — повідомлення "змінив курс на 180°" може бути true positive
+
+В `pipeline/geo_matcher.py` додати **епсилон** для координат з прифронтових повідомлень:
+```python
+EW_ZONES = [
+    {"name": "Запорізький напрямок", "lat": 47.5, "lon": 35.2, "radius_km": 60},
+    {"name": "Покровський напрямок", "lat": 48.3, "lon": 37.2, "radius_km": 50},
+]
+
+def is_coords_in_ew_zone(lat, lon) -> bool:
+    return any(haversine(lat, lon, z["lat"], z["lon"]) < z["radius_km"]
+               for z in EW_ZONES)
+
+# Якщо координати у EW zone — confidence -0.10, додаємо мітку "(точність ±5–20км)"
+```
+
+### eSIM dual-carrier + Apple Watch cellular
+
+Це **не код**, це instruction у `SETUP_CHECKLIST.md`. Додати:
+
+**Resilience setup для ежика (один раз):**
+1. **eSIM додати другого оператора** на її iPhone:
+   - Якщо основний Київстар → додати Vodafone або Lifecell
+   - Налаштувати automatic switching при втраті сигналу
+   - Vodafone Ukraine дав free eSIM з 2024 для існуючих UA-номерів
+2. **Apple Watch з cellular** (Series 5+):
+   - Підключити свій eSIM-план на Watch (~$5/міс у Київстар)
+   - Якщо телефон зник/розрядився — Watch отримає push з Telegram самостійно
+3. **Спарений iPad в укритті:**
+   - Старий iPad з активним Telegram-аккаунтом
+   - Залишити у шафі укриття, заряджається від power bank
+   - При IMMEDIATE сповіщення прийде на нього теж
+
+### Spare phone в укритті
+
+Простий, але важливий пункт у setup:
+- Купити дешевий смартфон (Nokia X20 ~$120, або старий iPhone SE)
+- Прописати Telegram-аккаунт ежика на ньому
+- Залишити у пакеті з power bank в укритті (вул. Білостоцького 17)
+- Старший по укриттю має знати, що це "її телефон на випадок"
+- Один раз на місяць перевіряти що батарея заряджена
+
+### Anti-disinformation enhancement
+
+Додати в `pipeline/deduplicator.py` **image metadata trust**:
+```python
+def assess_image_trust(image_msg) -> float:
+    """Зменшити confidence якщо картинка стара / без exif / з repost."""
+    score = 1.0
+    if image_msg.exif_datetime:
+        age_hours = (now() - image_msg.exif_datetime).total_seconds() / 3600
+        if age_hours > 6:
+            score -= 0.3
+    if image_msg.is_forwarded_from_unknown:
+        score -= 0.2
+    if image_msg.contains_watermark_blacklisted:
+        score -= 0.4
+    return max(score, 0.1)
+```
+
+**Reaction analysis** — якщо повідомлення на каналі набрало 100+ реакцій 👍/🔥 і 0 🤔/👎 — confidence +0.1.
+
+### Monthly fire drill
+
+Раз на місяць (1 числа о 14:00 — обідній час, бадьора), бот сам:
+1. Шле тестове "🟦 ТРЕНУВАННЯ: симульована IMMEDIATE. Якщо реальна — `/im_safe`."
+2. Чекає її відповідь
+3. Логує latency response, якщо вона не відповіла 3 хв — нагадує: "Тренування пройшло? Все ОК?"
+4. Місячний звіт латентності у `/digest`
+
+Це підтримує її натренованість + перевіряє що чат живий + перевіряє latency бота end-to-end.
+
+### Pets / dependents
+
+В `config/safety_circle.yaml` додати:
+```yaml
+dependents:
+  - type: pet
+    name: "Котик"
+    species: cat
+    grab_priority: 2         # 1=телефон+документи, 2=кіт, 3=...
+    notes: "Переноска у коридорі, поличка ліворуч"
+```
+
+В `home_layout.shelter_route` додати поле `dependents_handling: "Кота у переноску, документи на полиці у коридорі, час +30сек."` — це впливає на ETA до укриття.
+
+---
+
+## ВЕРИФІКАЦІЯ ДЖЕРЕЛ (2025–2026)
+
+Перед першим production-запуском перевір що канали активні та слідкуй за актуальністю списків. Канали в Україні мігрують, банять, ребрендуються постійно.
+
+**Перевір вручну** (через https://t.me/<username> — має бути ≥1 пост за останні 24 години):
+- `dnipropetrovsk_ova` — офіційний канал ОВА
+- `kpszsu` — Повітряні Сили ЗСУ
+- `dnipro_alerts`
+- `ny_i_dnipro`
+- `monitor_ukraine`
+- `serhii_flash` (Сергій Стерненко — добрий агрегатор, перепостить ОВА швидко)
+- `astra_news` — незалежний OSINT
+- `operativnoZSU`
+- `dnipro_oblast_alerts` (якщо існує)
+
+Якщо канал змінив username — оновити `config/sources.yaml`. Якщо неактивний — закоментувати з датою `# inactive since YYYY-MM`.
+
+---
+
+## ОПЕРАЦІЙНИЙ БЮДЖЕТ (~$45–55/міс)
+
+- VPS Hetzner CPX21 (Helsinki): ~$10
+- Watchdog VPS (Contabo): ~$4
+- Anthropic Haiku 4.5 (vision ~3000 img/міс): ~$8
+- Gemini 2.5 Flash-Lite (parallel race): ~$3
 - OpenAI TTS (~30 дзвінків): ~$1
-- Twilio voice (~30 × 30 сек): ~$5
+- **Plivo voice** для +380 (~30 дзвінків × 30 сек): ~$5
 - TurboSMS (~200 SMS): ~$5
-- Telegram bot: $0
+- Telegram bot API: $0
+- MapTiler tiles (для динамічних карт): $0 free tier (до 100K/міс) або $25
+- Backblaze B2 (backups, ~5GB): ~$0.50
+- Custom стікер-пак (one-time, генерація): ~$30 одноразово (Lottie) або $50-200 (custom AE)
+- Apple Watch eSIM для ежика (опціонально): ~$5/міс
+- Spare phone у укритті (one-time): ~$120
 
 ---
 

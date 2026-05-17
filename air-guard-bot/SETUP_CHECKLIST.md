@@ -68,39 +68,37 @@
   4. ⚠️ **Важливо:** у 2026 alerts.in.ua **тільки REST polling**, WebSocket НЕМАЄ. Granularity подій — лише 5 типів (`air_raid`, `artillery_shelling`, `urban_fights`, `chemical`, `nuclear`). Балістику/UAV/КАБ детектимо з OSINT-каналів.
   5. Офіційний SDK: `pip install alerts-in-ua` (AsyncClient)
 
-### 2.4 Voice провайдери (рекомендовано — active-active для life-safety)
+### 2.4 Emergency bot (другий бот для критичних alerts)
 
-- [ ] **Plivo** (1–2 дні верифікації)
-  1. https://www.plivo.com → Sign Up
-  2. Верифікація — вимагає валідного email + телефон + (іноді) бізнес-документи
-  3. **Critical:** Console → Voice → Geo Permissions → перевірити що `Ukraine` **enabled**. У нових акаунтів може бути disabled by default для high-fraud destinations.
-  4. Купити PSTN-номер (US номер OK — для outbound на +380 from-number не критичний)
-  5. Зберегти `PLIVO_AUTH_ID`, `PLIVO_AUTH_TOKEN`, `PLIVO_FROM_NUMBER`
-  6. Поповнити $10 (~$0.39/хв до UA mobile = ~25 хв розмов)
-  7. **Тест:** зробити 5 пробних дзвінків на свій номер +380, виміряти audio quality
+**У v1 ми НЕ використовуємо зовнішні дзвінки. Замість Plivo/Sinch — другий Telegram-бот з окремими гучними notification settings.**
 
-- [ ] **Sinch** (1–2 дні)
-  1. https://sinch.com → Sign Up
-  2. Verify, create Voice service plan
-  3. Зберегти `SINCH_SERVICE_PLAN_ID`, `SINCH_API_TOKEN`, `SINCH_FROM_NUMBER`
-  4. **Тест:** так само 5 пробних дзвінків
+- [ ] **Створити другого бота через @BotFather** (5 хв)
+  1. У Telegram → `@BotFather` → `/newbot`
+  2. Назва: `Air Guard SOS` (або як подобається)
+  3. Username: наприклад `air_guard_sos_bot`
+  4. Зберегти токен → `EMERGENCY_BOT_TOKEN`
+  5. _Цей бот шле тільки критичні (IMMEDIATE/Ballistic) — окремий чат на її телефоні з максимально гучним звуком_
 
-- [ ] (Опційно) **Twilio** — empirical test
-  - Раніше (2023) Twilio мав проблеми з UA mobile, але у поточному UA Voice Guidelines значиться "Outbound: Yes"
-  - Якщо є час — зареєструйся, купи номер $1, зроби 5 тестових дзвінків
-  - Якщо працює і ASR ≥ 95% — додай як третій failover-канал
+### 2.5 Voice провайдери — НЕ ПОТРІБНІ у v1
 
-### 2.5 SMS — DISABLED у v1
+~~Plivo / Sinch / Twilio~~ — у v1 не використовуємо. Голос ежик буде чути:
+- Через Telegram voice messages (.ogg) у чаті — OpenAI TTS або ElevenLabs
+- Через emergency bot з максимально гучним notification звуком
+- Через backup-користувача (Мишка) як людину-диспетчера
 
-~~TurboSMS~~ — пропускаємо у v1 (вирішили не використовувати SMS, Telegram + voice call достатньо).
+Якщо колись захочемо повернути external voice calls — інструкція збережена у `MASTER_PROMPT.md` секція "ІДЕЇ ДЛЯ v2".
 
-### 2.6 NEPTUN — НЕ має public API у 2026 (verified)
+### 2.6 SMS — DISABLED у v1
+
+~~TurboSMS~~ — пропускаємо у v1. Telegram-only escalation достатній.
+
+### 2.7 NEPTUN — НЕ має public API у 2026 (verified)
 
 - [ ] Можеш все ж відправити лист `NEPTUN_API_REQUEST.md` через їх Telegram-канал (контактного email на сайті немає, тільки tg)
 - Архітектурно: моніторимо їх Telegram-канал як OSINT-джерело Tier-2
 - Не блокуй розробку очікуванням NEPTUN
 
-### 2.7 Карти
+### 2.8 Карти
 
 - [ ] **Stadia Maps** (5 хв)
   1. https://stadiamaps.com → Sign Up (без картки)
@@ -108,7 +106,7 @@
   3. Зберегти → `STADIAMAPS_API_KEY`
   4. _Рекомендований стиль: `alidade_smooth_dark` (темна тема узгоджується з alert-маркерами)_
 
-### 2.8 Backup
+### 2.9 Backup
 
 - [ ] **Backblaze B2** (10 хв)
   1. https://www.backblaze.com → Cloud Storage → Sign Up
@@ -215,16 +213,16 @@
 - [ ] `ROLE_CODE_MISHKA`
 
 **Сильно рекомендовані:**
-- [ ] `PLIVO_AUTH_ID`, `PLIVO_AUTH_TOKEN`, `PLIVO_FROM_NUMBER`
-- [ ] `SINCH_SERVICE_PLAN_ID`, `SINCH_API_TOKEN`, `SINCH_FROM_NUMBER`
-- [ ] `PRIMARY_USER_PHONE`, `BACKUP_USER_PHONE`
+- [ ] `EMERGENCY_BOT_TOKEN` (другий бот для критичних alerts)
+- [ ] `PRIMARY_USER_PHONE`, `BACKUP_USER_PHONE` (для відображення у /sos і для backup-користувача щоб подзвонити фізично)
 - [ ] `STADIAMAPS_API_KEY`
 - [ ] `DTEK_YASNO_QUEUE`
 - [ ] `B2_KEY_ID`, `B2_APP_KEY`, `B2_BUCKET`, `AGE_PUBLIC_KEY`
 
 **Опціональні:**
-- `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` (якщо хочеш якісний UA голос Мишки)
-- ~~`TURBOSMS_TOKEN`~~ (DISABLED у v1)
+- `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` (якісний UA голос Мишки у voice .ogg повідомленнях)
+- ~~`TURBOSMS_TOKEN`~~ (SMS DISABLED у v1)
+- ~~`PLIVO_*`, `SINCH_*`~~ (зовнішні дзвінки DISABLED у v1)
 
 **Порожні OK на старті:**
 - `PRIMARY_USER_ID`, `BACKUP_USER_ID` — заповняться автоматично після `/im_yozhyk` та `/im_mishka`
@@ -242,7 +240,7 @@
 7. Перевірити `/whoami` від обох
 8. Тестове `/sos` від ежика — має прийти карта з укриттями
 9. Тестове `/svitlo` — має показати графік DTEK для черги Савкіна 6
-10. Перевірити voice call: `/test_call` від тебе (development-only) → телефон ежика має задзвонити через ~10 сек
+10. Перевірити Telegram escalation: `/test_alert immediate` від тебе → ежик отримає за 60 сек **5 окремих push**: sticker → текст → voice .ogg → emergency bot → backup ping
 
 ---
 
@@ -293,7 +291,7 @@
 ## Step 12: Тестові сценарії
 
 - [ ] **`/test_alert immediate`** — синтетичний IMMEDIATE через debug-команду
-  - Перевірити: latency прильоту (має бути <2 сек), inline-кнопки, voice call escalation
+  - Перевірити: latency прильоту (має бути <2 сек), inline-кнопки, Telegram escalation chain (sticker → бустер → voice .ogg → emergency bot → backup ping)
 - [ ] **`/test_alert ballistic`** — балістика-shortcut
   - Має прилетіти моментально через ballistic_path
 - [ ] **`/test_alert pre_alert`** — pre-alert тест
@@ -307,7 +305,7 @@
 **Раз на тиждень:**
 - `/latency_stats` — p95 має бути < 3 сек
 - Перевірити логи watchdog — не було downtime
-- Баланси: Plivo, Sinch, Anthropic, OpenAI, ElevenLabs
+- Баланси: Anthropic, OpenAI, ElevenLabs (зовнішніх дзвінків і SMS у v1 немає)
 
 **Раз на місяць:**
 - **Fire drill:** бот сам шле "🟦 ТРЕНУВАННЯ" → перевірка end-to-end (це автоматизовано в коді)
@@ -325,8 +323,8 @@
 | alerts.in.ua | Дублюємо з @kpszsu, @dnipropetrovsk_ova Telegram |
 | Anthropic | Vision-race fallback на Gemini only |
 | Gemini | Vision на Claude only |
-| Plivo voice | Sinch failover автоматично |
-| Plivo + Sinch одночасно | Telegram voice message + escalation backup-користувачу |
+| Primary bot заблокований / лагає | Emergency bot як паралельний канал |
+| Обидва боти лагають | Telegram voice message + escalation backup-користувачу, який дзвонить фізично |
 | YASNO API | Text-scrape DTEK Dnem як fallback |
 | Stadia Maps | MapTiler як backup tile-провайдер |
 | Hetzner | Migrate to Contabo (інший IP, але працює) |

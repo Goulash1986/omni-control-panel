@@ -25,14 +25,15 @@
 
 ## Огляд що буде в боті
 
-**Захист життя через**:
+**Захист життя через (Telegram-only у v1)**:
 - Real-time агрегація з alerts.in.ua (REST polling 30s) + OSINT Telegram-каналів
 - Окрема обробка для шахедів (стандартних + реактивних 238) / крилатих ракет / **балістики** / Кинджалів / КАБ — кожен тип має свій профіль швидкості та escalation timing
 - Live Threat Dashboard — одне повідомлення оновлюється кожні 5 сек з картою позицій загроз і ETA
-- Voice call escalation через **Plivo + Sinch active-active** (failover для +380, Twilio в Україні не закладаємо без empirical test) + OpenAI/ElevenLabs TTS
-- Telegram voice message як паралельний канал (заміна SMS у v1)
+- **Два Telegram-боти** (primary + emergency) — окремі notification settings для кожного, гарантує що IMMEDIATE буде почуто
+- **Telegram voice messages (.ogg)** через OpenAI TTS або ElevenLabs з voice clone Мишки
+- **Telegram escalation chain**: sticker → бустер → voice .ogg → emergency bot → backup ping → family circle (без зовнішніх дзвінків)
 - Анімовані стікери (sticker pack `Air Guard Alerts`) — миттєвий візуальний сигнал
-- Карти з її домом, її районом, концентричними радіусами та найближчими укриттями
+- Карти через **Stadia Maps** + py-staticmaps — з її домом, районом, концентричними радіусами, укриттями
 - Pre-alert з засіканням зльоту стратегічної авіації РФ (4-6 годин попередження)
 - Self-watchdog на окремому VPS — якщо бот ляже, тобі прийде Telegram через окремого watchdog-бота
 
@@ -43,13 +44,15 @@
 - Apartment-level routing — інструкція "ванна, північно-східний кут, спиною до несучої стіни" + точна адреса Савкіна 6, під'їзд 2, кв. 59, 6 поверх
 - Pre-cached escape route до конкретного укриття з кодом і часом до нього
 - **Графік відключень DTEK/YASNO** для її черги — попередження за 30 хв і за 5 хв
+- **Live Location via 📎** — вона ділиться location через скрепку, бот динамічно перераховує ETA від її поточної точки
+- **Zone monitoring** — вона малює зони (робота, дім батьків, спортзал), бот моніторить їх окремо
 
 **Operational**:
 - Multi-LLM (Claude Haiku 4.5 + Gemini 2.5 Flash-Lite парально) — швидкість + надійність
 - VPS **Hetzner CAX21 у Falkenstein** — ping до Telegram DC ~15-25мс (краще ніж Helsinki)
-- Бюджет **~$43-48/міс** (у v1 без SMS)
+- Бюджет **~$26-31/міс** (Telegram-only без зовнішніх дзвінків і SMS)
 - Розробка 4 тижні до повноцінного v1
-- **SMS відключено у v1** — увімкнемо коли буде потреба
+- **SMS і зовнішні дзвінки відключені у v1** — фокус на Telegram. Інструкція для активації у v2 збережена в `MASTER_PROMPT.md`
 
 ## Стан
 

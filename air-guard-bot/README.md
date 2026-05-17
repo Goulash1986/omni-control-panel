@@ -55,21 +55,25 @@
 - **Audit log** — повна історія всіх подій з `/audit`, `/replay <event_id>` для post-mortem
 - **`/her_status`** — все що з ежиком зараз (battery, location district, last interaction, inferred mood)
 
-**Premium фічі (опц., у roadmap v1.5–v2)**:
-- Conversational Mishka chat (вона розмовляє з ботом, Claude відповідає в персоні)
-- Trauma-aware messaging (адаптує тон коли стрес високий)
-- Threat replay GIF після major event
-- AI photo assessment (вона фоткає підозріле, vision LLM аналізує)
-- Crisis mode `/crisis` (continuous polling, ускорена ескалація)
-- Smart shelter recommender (ML на її історії)
-- Weekly podcast у Мишкіному голосі
-- Document vault, battery prediction, auto-respond, public-friendly channel
+**Premium фічі (всі 12 включені у v1)**:
+- **Conversational Mishka chat** — Claude Sonnet 4.6 в персоні Мишки, з пам'яттю (vector memory через sqlite-vec + OpenAI embeddings)
+- **Voice in/out** — голосове від ежика → Whisper STT → Мишка відповідає → ElevenLabs voice .ogg
+- **Trauma-aware messaging** — stress metrics, адаптивний тон, дихальні вправи
+- **Threat replay GIF** — animated map з рухом загрози після major event
+- **AI photo assessment** — фото підозрілого предмета → vision LLM "це загроза чи Starlink?"
+- **Crisis mode `/crisis`** — continuous polling, ескалація на крок вище, ігнор quiet hours
+- **Smart shelter recommender** — baseline + ML на 30 днях даних
+- **Weekly podcast** — ElevenLabs Мишка-голос читає тижневий дайджест неділями
+- **Document vault `/docs`** — age-encrypted сховище паспорта, медкартки, страховки
+- **Battery prediction** — ML модель прогнозу заряду з урахуванням DTEK графіка
+- **Auto-respond mode** — auto-acks check-in коли вона у транспорті / спить / на роботі
+- **Public-friendly channel** — окремий канал зі статусами для її друзів без розкриття локації
 
 **Operational**:
 - Multi-LLM (Claude Haiku 4.5 + Gemini 2.5 Flash-Lite парально) — швидкість + надійність
 - VPS **Hetzner CAX21 у Falkenstein** — ping до Telegram DC ~15-25мс (краще ніж Helsinki)
-- Бюджет **~$26-31/міс** (Telegram-only без зовнішніх дзвінків і SMS)
-- Розробка 4 тижні до повноцінного v1
+- Бюджет **~$36-46/міс** з усіма premium фічами (Telegram-only без зовнішніх дзвінків і SMS)
+- Розробка 7 тижнів до повноцінного v1 з усіма premium
 - **SMS і зовнішні дзвінки відключені у v1** — фокус на Telegram. Інструкція для активації у v2 збережена в `MASTER_PROMPT.md`
 
 ## Стан

@@ -47,6 +47,24 @@
 - **Live Location via 📎** — вона ділиться location через скрепку, бот динамічно перераховує ETA від її поточної точки
 - **Zone monitoring** — вона малює зони (робота, дім батьків, спортзал), бот моніторить їх окремо
 
+**Backup user (Мишка) як співпілот**:
+- **Silent mirror** — backup тихо бачить все що ежик робить у боті (повідомлення, callbacks, зони, location зміни, battery) без турбування push'ами
+- **Loud mirror** — критичні події (IMMEDIATE, "ежик не реагує", balance critical) прилітають з push'ом
+- **`/admin` панель** — інтерактивний дашборд з auto-refresh: статус ежика, DTEK графік, баланси сервісів, system health
+- **Balance monitoring + Top-up кнопки** — щоденний аудит балансів (Anthropic/OpenAI/ElevenLabs/Hetzner/B2), inline-кнопки → пряме поповнення на сайті провайдера
+- **Audit log** — повна історія всіх подій з `/audit`, `/replay <event_id>` для post-mortem
+- **`/her_status`** — все що з ежиком зараз (battery, location district, last interaction, inferred mood)
+
+**Premium фічі (опц., у roadmap v1.5–v2)**:
+- Conversational Mishka chat (вона розмовляє з ботом, Claude відповідає в персоні)
+- Trauma-aware messaging (адаптує тон коли стрес високий)
+- Threat replay GIF після major event
+- AI photo assessment (вона фоткає підозріле, vision LLM аналізує)
+- Crisis mode `/crisis` (continuous polling, ускорена ескалація)
+- Smart shelter recommender (ML на її історії)
+- Weekly podcast у Мишкіному голосі
+- Document vault, battery prediction, auto-respond, public-friendly channel
+
 **Operational**:
 - Multi-LLM (Claude Haiku 4.5 + Gemini 2.5 Flash-Lite парально) — швидкість + надійність
 - VPS **Hetzner CAX21 у Falkenstein** — ping до Telegram DC ~15-25мс (краще ніж Helsinki)
